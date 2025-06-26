@@ -104,6 +104,46 @@ docker pull taskflowpm/task-flow-pm
 docker run -v $(pwd):/workspace taskflowpm/task-flow-pm plan document.pdf
 ```
 
+### 🪟 Windows Installation
+
+**Prerequisites:**
+- Node.js 18+ ([Download](https://nodejs.org/))
+- PowerShell 5.1+ (included with Windows)
+- Git for Windows ([Download](https://git-scm.com/download/win))
+
+**Quick Setup (PowerShell):**
+```powershell
+# Clone the repository
+git clone https://github.com/diegonogueira/task-flow-pm.git
+cd task-flow-pm
+
+# Install dependencies
+npm install
+
+# Build the project
+npm run build
+
+# Initialize
+npm run cli init
+
+# Setup with Cursor
+npm run setup:cursor
+
+# Setup with VS Code
+npm run setup:vscode
+```
+
+**Windows-Specific Commands:**
+```powershell
+# Use Windows-compatible scripts
+npm run test:complete        # Windows test suite
+npm run cli-pt:win          # Portuguese CLI (Windows)
+npm run cli-en:win          # English CLI (Windows)
+
+# Diagnostics
+npm run mcp:diagnose        # Cross-platform diagnostics
+```
+
 ## 🔧 Usage
 
 ### Basic Commands
@@ -135,6 +175,67 @@ task-flow-pm inicializar
 task-flow-pm planejar documento.docx
 task-flow-pm tarefas
 task-flow-pm proxima
+
+## 🪟 Windows Compatibility
+
+Task Flow PM is **100% compatible** with Windows and includes dedicated tools:
+
+### ✅ **What Works on Windows**
+- **All CLI commands** with PowerShell support
+- **Automatic setup scripts** for Cursor and VS Code
+- **Native Node.js processing** (no Python dependencies)
+- **SQLite database** with better-sqlite3
+- **Document processing** for all supported formats
+- **MCP server integration** with Windows paths
+
+### 🔧 **Windows-Specific Features**
+- **PowerShell scripts**: `.ps1` files for setup and testing
+- **Windows path handling**: Automatic path resolution
+- **Environment variables**: Cross-platform support with `cross-env`
+- **Windows terminal**: Full Unicode and emoji support
+
+### 🚨 **Windows Troubleshooting**
+
+**PowerShell Execution Policy:**
+```powershell
+# If scripts don't run, enable script execution:
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+# Or run with bypass:
+powershell -ExecutionPolicy Bypass -File scripts/setup-cursor.ps1
+```
+
+**Node.js Installation Issues:**
+```powershell
+# Install Node.js via Chocolatey:
+choco install nodejs
+
+# Or via Winget:
+winget install OpenJS.NodeJS
+
+# Verify installation:
+node --version
+npm --version
+```
+
+**SQLite Compilation Issues:**
+```powershell
+# Install Visual Studio Build Tools:
+npm install --global windows-build-tools
+
+# Or install Visual Studio Community with C++ workload
+# Then rebuild better-sqlite3:
+npm rebuild better-sqlite3
+```
+
+**Path Issues:**
+```powershell
+# Use absolute paths if relative paths fail:
+npm run cli plan "C:\\Users\\YourName\\Documents\\spec.docx"
+
+# Use forward slashes in PowerShell:
+npm run cli plan "C:/Users/YourName/Documents/spec.docx"
+```
 task-flow-pm iniciar <id-tarefa>
 task-flow-pm concluir <id-tarefa> 120
 ```
