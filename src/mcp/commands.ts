@@ -5,7 +5,7 @@ import { Logger } from '../services/logger';
 import { EffortEstimator } from '../services/effort';
 import { ScaffoldGenerator } from '../services/scaffold';
 import { TimeTracker } from '../services/time-tracker';
-import { doclingService } from '../services/docling.js';
+import { doclingService } from '../services/docling';
 import { 
 MCPRequestTypes, 
 MCPResponse, 
