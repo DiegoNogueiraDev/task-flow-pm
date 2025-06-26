@@ -16,6 +16,9 @@
     "dev": "ts-node bin/server.ts",
     "mcp:server": "npm run build && node dist/bin/server.js",
     "mcp:diagnose": "./scripts/diagnose-mcp.sh",
+    "docling:setup": "./scripts/setup-docling.sh",
+    "docling:convert": "source venv/bin/activate && python scripts/docling_bridge.py",
+    "docling:test": "source venv/bin/activate && python scripts/docling_bridge.py --help",
     "cli": "ts-node bin/mcp-unified.ts",
     "cli-pt": "LANG=pt_BR.UTF-8 ts-node bin/mcp-unified.ts",
     "cli-en": "LANG=en_US.UTF-8 ts-node bin/mcp-unified.ts",
@@ -41,9 +44,14 @@
   "author": "DevArchitect AI",
   "license": "MIT",
   "dependencies": {
-    "better-sqlite3": "^9.2.2",
-    "yargs": "^17.7.2",
+    "@anthropic-ai/sdk": "^0.27.0",
+    "better-sqlite3": "^11.5.0",
     "node-fetch": "^3.3.2",
+    "uuid": "^10.0.0",
+    "chokidar": "^4.0.1",
+    "multer": "^1.4.5-lts.1",
+    "mime-types": "^2.1.35",
+    "yargs": "^17.7.2",
     "@types/better-sqlite3": "^7.6.8"
   },
   "devDependencies": {

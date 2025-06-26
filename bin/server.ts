@@ -217,6 +217,42 @@ class MCPServer {
           },
           required: ['taskId', 'action']
         }
+      },
+      {
+        name: 'processDocument',
+        description: 'Process a document using Docling and generate tasks, context, and stories',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            filePath: { type: 'string', description: 'Path to the document file to process' },
+            format: { type: 'string', enum: ['markdown', 'html', 'json'], description: 'Output format for the converted content' },
+            generateTasks: { type: 'boolean', description: 'Whether to generate tasks from the document' },
+            generateContext: { type: 'boolean', description: 'Whether to generate context from the document' },
+            storyMapping: { type: 'boolean', description: 'Whether to extract user stories from the document' }
+          },
+          required: ['filePath']
+        }
+      },
+      {
+        name: 'convertDocument',
+        description: 'Convert a document to text using Docling without processing',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            filePath: { type: 'string', description: 'Path to the document file to convert' },
+            format: { type: 'string', enum: ['markdown', 'html', 'json'], description: 'Output format for the converted content' }
+          },
+          required: ['filePath']
+        }
+      },
+      {
+        name: 'listProcessedDocuments',
+        description: 'List all documents that have been processed with Docling',
+        inputSchema: {
+          type: 'object',
+          properties: {},
+          required: []
+        }
       }
     ];
   }

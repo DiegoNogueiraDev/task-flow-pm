@@ -146,11 +146,30 @@ export interface MCPConfig {
   }
   
   export interface TrackTaskTimeRequest {
-    command: 'trackTaskTime';
-    taskId: string;
-    action: 'start' | 'stop' | 'pause' | 'resume';
-    context?: string;
-  }
+  command: 'trackTaskTime';
+  taskId: string;
+  action: 'start' | 'stop' | 'pause' | 'resume';
+  context?: string;
+}
+
+export interface ProcessDocumentRequest {
+  command: 'processDocument';
+  filePath: string;
+  format?: 'markdown' | 'html' | 'json';
+  generateTasks?: boolean;
+  generateContext?: boolean;
+  storyMapping?: boolean;
+}
+
+export interface ConvertDocumentRequest {
+  command: 'convertDocument';
+  filePath: string;
+  format?: 'markdown' | 'html' | 'json';
+}
+
+export interface ListProcessedDocumentsRequest {
+  command: 'listProcessedDocuments';
+}
   
   export interface TimeTrackingSession {
     id: string;
@@ -178,15 +197,18 @@ export interface MCPConfig {
   }
   
   export type MCPRequestTypes = 
-    | GenerateTasksRequest
-    | ListTasksRequest
-    | GetTaskDetailsRequest
-    | MarkTaskCompleteRequest
-    | GetNextTaskRequest
-    | BeginTaskRequest
-    | ReflectTaskRequest
-    | GenerateScaffoldRequest
-    | HybridSearchRequest
-    | StoreDocumentRequest
-    | RetrieveContextRequest
-    | TrackTaskTimeRequest;
+  | GenerateTasksRequest 
+  | ListTasksRequest 
+  | GetTaskDetailsRequest 
+  | MarkTaskCompleteRequest 
+  | GetNextTaskRequest 
+  | BeginTaskRequest 
+  | ReflectTaskRequest 
+  | GenerateScaffoldRequest 
+  | HybridSearchRequest 
+  | StoreDocumentRequest 
+  | RetrieveContextRequest
+  | TrackTaskTimeRequest
+  | ProcessDocumentRequest
+  | ConvertDocumentRequest
+  | ListProcessedDocumentsRequest;

@@ -5,6 +5,7 @@ import { Logger } from '../services/logger';
 import { EffortEstimator } from '../services/effort';
 import { ScaffoldGenerator } from '../services/scaffold';
 import { TimeTracker } from '../services/time-tracker';
+import { doclingService } from '../services/docling.js';
 import { 
 MCPRequestTypes, 
 MCPResponse, 
@@ -20,7 +21,10 @@ GenerateScaffoldRequest,
 HybridSearchRequest,
 StoreDocumentRequest,
 RetrieveContextRequest,
-TrackTaskTimeRequest
+TrackTaskTimeRequest,
+ProcessDocumentRequest,
+ListProcessedDocumentsRequest,
+ConvertDocumentRequest
 } from './schema';
 import { randomUUID } from 'crypto';
 
@@ -66,6 +70,12 @@ async handleCommand(request: MCPRequestTypes): Promise<MCPResponse> {
         return await this.retrieveContext(request as RetrieveContextRequest);
       case 'trackTaskTime':
         return await this.trackTaskTime(request as TrackTaskTimeRequest);
+      case 'processDocument':
+        return await this.processDocument(request as ProcessDocumentRequest);
+      case 'convertDocument':
+        return await this.convertDocument(request as ConvertDocumentRequest);
+      case 'listProcessedDocuments':
+        return await this.listProcessedDocuments(request as ListProcessedDocumentsRequest);
       default:
         return {
           success: false,
@@ -824,4 +834,154 @@ private async trackTaskTime(request: TrackTaskTimeRequest): Promise<MCPResponse>
     };
   }
 }
+
+  private async processDocument(request: ProcessDocumentRequest): Promise<MCPResponse> {
+    const { filePath, format = 'markdown', generateTasks = true, generateContext = true, storyMapping = false } = request;
+    
+    if (!filePath) {
+      return {
+        success: false,
+        error: 'filePath is required',
+      };
+    }
+
+    try {
+      const processed = await doclingService.processDocument(filePath, {
+        format,
+        generateTasks,
+        generateContext,
+        storyMapping,
+      });
+
+      // Se gerou tarefas, armazená-las no banco
+      if (processed.tasks && processed.tasks.length > 0) {
+        for (const task of processed.tasks) {
+                     const storedTask = this.db.addNode({
+             id: task.id,
+             title: task.title,
+             description: task.description,
+             type: task.type,
+             status: 'pending',
+             priority: task.priority,
+             estimateMinutes: task.estimatedMinutes,
+             actualMinutes: 0,
+             tags: [`docling-${task.source}`, 'auto-generated'],
+           });
+
+          // Log task creation
+          this.logger.logTaskCreated(storedTask.id, storedTask.estimateMinutes);
+
+          // Generate and store embeddings
+          const embeddingText = `${task.title} ${task.description}`;
+          try {
+            const vector = await this.embeddings.generateEmbedding(embeddingText);
+            this.db.addEmbedding({
+              id: randomUUID(),
+              nodeId: task.id,
+              text: embeddingText,
+              vector,
+            });
+          } catch (error) {
+            console.warn(`Failed to generate embedding for task ${task.id}:`, error);
+          }
+        }
+      }
+
+      // Se gerou contexto, armazená-lo
+      if (processed.context && processed.context.length > 0) {
+        for (const ctx of processed.context) {
+          const contextText = `${ctx.title} ${ctx.content}`;
+          try {
+            await this.storeDocument({
+              command: 'storeDocument',
+              content: contextText,
+              title: ctx.title,
+              tags: [`docling-context`, ...ctx.tags],
+            });
+          } catch (error) {
+            console.warn(`Failed to store context ${ctx.id}:`, error);
+          }
+        }
+      }
+
+      return {
+        success: true,
+        data: {
+          documentId: processed.id,
+          sourceFile: processed.sourceFile,
+          tasksGenerated: processed.tasks?.length || 0,
+          contextGenerated: processed.context?.length || 0,
+          storiesGenerated: processed.stories?.length || 0,
+          metadata: processed.metadata,
+          processedAt: processed.processedAt,
+        },
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Document processing failed',
+      };
+    }
+  }
+
+  private async convertDocument(request: ConvertDocumentRequest): Promise<MCPResponse> {
+    const { filePath, format = 'markdown' } = request;
+    
+    if (!filePath) {
+      return {
+        success: false,
+        error: 'filePath is required',
+      };
+    }
+
+    try {
+      const result = await doclingService.convertDocument(filePath, { format });
+
+      return {
+        success: true,
+        data: {
+          content: result.content,
+          metadata: result.metadata,
+          format: result.format,
+          sourceFile: filePath,
+        },
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Document conversion failed',
+      };
+    }
+  }
+
+  private async listProcessedDocuments(request: ListProcessedDocumentsRequest): Promise<MCPResponse> {
+    try {
+      const documents = doclingService.getProcessedDocuments();
+
+      return {
+        success: true,
+        data: {
+          documents: documents.map(doc => ({
+            id: doc.id,
+            sourceFile: doc.sourceFile,
+            tasksCount: doc.tasks?.length || 0,
+            contextCount: doc.context?.length || 0,
+            storiesCount: doc.stories?.length || 0,
+            processedAt: doc.processedAt,
+            metadata: {
+              title: doc.metadata.title,
+              pageCount: doc.metadata.page_count,
+              textLength: doc.metadata.text_length,
+            },
+          })),
+          total: documents.length,
+        },
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to list processed documents',
+      };
+    }
+  }
 }
