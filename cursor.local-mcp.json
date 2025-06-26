@@ -1,0 +1,11 @@
+{
+    "name": "Local Task MCP",
+    "version": "0.1.0",
+    "stdio": "json",
+    "activationEvents": ["onStartupFinished"],
+    "run": {
+      "command": "node",
+      "args": ["bin/server.js"],
+      "cwd": "${workspaceFolder}"
+    }
+  }

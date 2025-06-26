@@ -1,0 +1,13 @@
+{
+    "mcpServers": {
+      "local-task-mcp": {
+        "command": "node",
+        "args": ["./dist/bin/server.js"],
+        "cwd": "./",
+        "description": "Local-first Model Context Protocol server with embedded knowledge graph for task management",
+        "env": {
+          "NODE_ENV": "production"
+        }
+      }
+    }
+  }
