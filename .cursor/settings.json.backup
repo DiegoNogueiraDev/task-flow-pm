@@ -1,7 +1,7 @@
 {
     "cursor.mcp.enabled": true,
     "cursor.mcp.autoStart": true,
-    "cursor.mcp.servers": ["task-flow-pm"],
+    "cursor.mcp.servers": ["local-task-mcp"],
     "cursor.chat.contextAwareness": "enhanced",
     "cursor.chat.includeWorkspaceContext": true,
     "cursor.autocomplete.enabled": true,

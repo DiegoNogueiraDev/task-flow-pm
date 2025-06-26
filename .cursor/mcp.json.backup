@@ -1,0 +1,14 @@
+{
+    "mcpServers": {
+      "task-flow-pm": {
+        "command": "node",
+        "args": ["./dist/bin/server.js"],
+        "cwd": "${workspaceRoot}",
+        "description": "Local-first task management with intelligent context and learning",
+        "env": {
+          "NODE_ENV": "production",
+          "MCP_DEBUG": "false"
+        }
+      }
+    }
+  }

@@ -1,0 +1,126 @@
+# 🗂️ Task Flow PM Docker Ignore
+
+# 📁 Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 🏗️ Build outputs
+dist/
+build/
+coverage/
+*.tgz
+
+# 🧪 Testing
+__tests__/
+*.test.ts
+*.test.js
+*.spec.ts
+*.spec.js
+test/
+tests/
+
+# 📊 Development tools
+.vscode/
+.cursor/
+*.code-workspace
+
+# 🔧 Configuration files
+.env*
+.npmrc
+.yarnrc
+tsconfig.json
+vitest.config.ts
+eslint.config.js
+
+# 📝 Documentation
+docs/
+*.md
+README.md
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
+CHANGELOG.md
+
+# 🗃️ Version control
+.git/
+.gitignore
+.gitattributes
+
+# 🚀 CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+Jenkinsfile
+
+# 🧰 Tools and utilities
+scripts/setup-*.sh
+scripts/setup-*.ps1
+scripts/setup-*.bat
+scripts/test-*.js
+scripts/diagnose-*.sh
+
+# 📦 Package managers
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# 🗄️ Temporary files
+tmp/
+temp/
+.tmp/
+.cache/
+*.tmp
+*.temp
+*.log
+
+# 🖼️ Media files
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.svg
+*.ico
+
+# 📊 Analytics and tracking
+.nyc_output/
+coverage/
+*.lcov
+
+# 🔐 Security
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+secrets/
+*.pem
+*.key
+
+# 🗃️ OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# 🧪 IDE specific
+.idea/
+*.swp
+*.swo
+*~
+
+# 📦 Scaffold and examples
+scaffold/
+examples/
+
+# 🔄 Backup files
+*.backup
+*.bak
+*.old
+
+# 📊 Performance and profiling
+*.cpuprofile
+*.heapsnapshot 

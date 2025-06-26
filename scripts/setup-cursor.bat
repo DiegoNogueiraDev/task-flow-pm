@@ -14,13 +14,42 @@ if not exist "package.json" (
     exit /b 1
 )
 
-REM Check if Cursor is installed
+REM Check if Cursor is installed or running
+echo 🔍 Checking Cursor installation...
+set CURSOR_FOUND=false
+
+REM Check if Cursor command is available
 where cursor >nul 2>nul
-if %errorlevel% neq 0 (
-    echo ❌ Cursor is not installed or not in PATH
-    echo 💡 Download from: https://cursor.sh/
+if %errorlevel% equ 0 (
+    echo ✅ Cursor CLI found: cursor
+    set CURSOR_FOUND=true
+) else (
+    REM Check if Cursor is running via process check
+    tasklist /FI "IMAGENAME eq Cursor.exe" 2>nul | find /I "Cursor.exe" >nul
+    if %errorlevel% equ 0 (
+        echo ✅ Cursor is running (detected via process check)
+        set CURSOR_FOUND=true
+    ) else (
+        REM Check common installation paths
+        if exist "%LOCALAPPDATA%\Programs\cursor\Cursor.exe" (
+            echo ✅ Cursor installation found in %LOCALAPPDATA%\Programs\cursor\
+            set CURSOR_FOUND=true
+        ) else if exist "%PROGRAMFILES%\Cursor\Cursor.exe" (
+            echo ✅ Cursor installation found in %PROGRAMFILES%\Cursor\
+            set CURSOR_FOUND=true
+        )
+    )
+)
+
+if "%CURSOR_FOUND%"=="false" (
+    echo ❌ Cursor is not installed or not accessible
+    echo 💡 Install Cursor from: https://cursor.sh/
+    echo    • Download the installer and run it
+    echo    • Or use winget: winget install Cursor.Cursor
     pause
     exit /b 1
+) else (
+    echo ✅ Cursor detected successfully
 )
 
 REM 1. Build the project
@@ -109,12 +138,17 @@ echo.
 echo 🚀 Ready to experience AI-powered development with Cursor + Task Flow PM!
 echo.
 
-REM Offer to open Cursor automatically
-set /p openCursor="🤔 Open Cursor now? (y/N): "
-if /i "%openCursor%"=="y" (
-    echo 🎯 Opening Cursor...
-    start cursor .
-    echo ✅ Cursor opened! Check MCP status in the status bar.
+REM Offer to open Cursor automatically (only if cursor command is available)
+where cursor >nul 2>nul
+if %errorlevel% equ 0 (
+    set /p openCursor="🤔 Open Cursor now? (y/N): "
+    if /i "%openCursor%"=="y" (
+        echo 🎯 Opening Cursor...
+        start cursor .
+        echo ✅ Cursor opened! Check MCP status in the status bar.
+    )
+) else (
+    echo 💡 Since Cursor is already running, just restart it to apply MCP configuration.
 )
 
 echo.

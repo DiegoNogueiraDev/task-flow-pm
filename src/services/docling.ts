@@ -40,8 +40,14 @@ export interface ConversionResult {
 
 export interface ProcessResult {
   success: boolean;
-  document: ProcessedDocument;
+  id: string;
+  sourceFile: string;
+  document?: ProcessedDocument;
   tasks?: any[];
+  context?: any[];
+  stories?: any[];
+  metadata?: any;
+  processedAt: Date;
   error?: string;
 }
 
@@ -163,9 +169,15 @@ export class DoclingService {
   }
 
   /**
-   * Processa documento e opcionalmente gera tarefas
+   * Processa documento com opções flexíveis
    */
-  async processDocument(filePath: string, generateTasks: boolean = false): Promise<ProcessResult> {
+  async processDocument(filePath: string, options: {
+    format?: string;
+    generateTasks?: boolean;
+    generateContext?: boolean;
+    storyMapping?: boolean;
+  } = {}): Promise<ProcessResult> {
+    const { format = 'markdown', generateTasks = false, generateContext = false, storyMapping = false } = options;
     try {
       const conversionResult = await this.convertDocument(filePath);
       
@@ -196,19 +208,36 @@ export class DoclingService {
 
       return {
         success: true,
+        id: document.id,
+        sourceFile: filePath,
         document,
-        tasks: generateTasks ? tasks : undefined
+        tasks: generateTasks ? tasks : undefined,
+        context: generateContext ? [] : undefined, // TODO: Implementar geração de contexto
+        stories: storyMapping ? [] : undefined, // TODO: Implementar story mapping
+        metadata: conversionResult.metadata,
+        processedAt: document.processedAt
       };
 
     } catch (error) {
       logger.log('error', `Document processing failed: ${error instanceof Error ? error.message : String(error)}`);
       
+      const errorId = this.generateId();
       return {
         success: false,
-        document: {} as ProcessedDocument,
+        id: errorId,
+        sourceFile: filePath,
+        processedAt: new Date(),
         error: error instanceof Error ? error.message : String(error)
       };
     }
+  }
+
+  /**
+   * Obtém documentos processados (compatibilidade com commands.ts)
+   */
+  getProcessedDocuments(): ProcessResult[] {
+    // TODO: Implementar cache ou busca real de documentos processados
+    return [];
   }
 
   /**

@@ -10,12 +10,47 @@ if (-Not (Test-Path "package.json")) {
     exit 1
 }
 
-# Check if Cursor is installed
+# Check if Cursor is installed or running
+Write-Host "🔍 Checking Cursor installation..." -ForegroundColor Blue
+$cursorFound = $false
+$cursorPath = $null
+
+# Check if Cursor command is available
 $cursorPath = Get-Command cursor -ErrorAction SilentlyContinue
-if (-Not $cursorPath) {
-    Write-Host "❌ Cursor is not installed or not in PATH" -ForegroundColor Red
-    Write-Host "💡 Download from: https://cursor.sh/" -ForegroundColor Yellow
+if ($cursorPath) {
+    Write-Host "✅ Cursor CLI found: cursor" -ForegroundColor Green
+    $cursorFound = $true
+} else {
+    # Check if Cursor is running via process check
+    $cursorProcess = Get-Process -Name "Cursor" -ErrorAction SilentlyContinue
+    if ($cursorProcess) {
+        Write-Host "✅ Cursor is running (detected via process check)" -ForegroundColor Green
+        $cursorFound = $true
+    } else {
+        # Check common installation paths
+        $commonPaths = @(
+            "$env:LOCALAPPDATA\Programs\cursor\Cursor.exe",
+            "$env:PROGRAMFILES\Cursor\Cursor.exe"
+        )
+        
+        foreach ($path in $commonPaths) {
+            if (Test-Path $path) {
+                Write-Host "✅ Cursor installation found at: $path" -ForegroundColor Green
+                $cursorFound = $true
+                break
+            }
+        }
+    }
+}
+
+if (-Not $cursorFound) {
+    Write-Host "❌ Cursor is not installed or not accessible" -ForegroundColor Red
+    Write-Host "💡 Install Cursor from: https://cursor.sh/" -ForegroundColor Yellow
+    Write-Host "   • Download the installer and run it" -ForegroundColor Yellow
+    Write-Host "   • Or use winget: winget install Cursor.Cursor" -ForegroundColor Yellow
     exit 1
+} else {
+    Write-Host "✅ Cursor detected successfully" -ForegroundColor Green
 }
 
 # 1. Build the project
@@ -192,12 +227,16 @@ if (Test-Path ".mcp\graph.db") {
 Write-Host ""
 Write-Host "🚀 Ready to experience AI-powered development with Cursor + Task Flow PM!" -ForegroundColor Green
 
-# Offer to open Cursor automatically
-$openCursor = Read-Host "🤔 Open Cursor now? (y/N)"
-if ($openCursor -match "^[Yy]$") {
-    Write-Host "🎯 Opening Cursor..." -ForegroundColor Blue
-    Start-Process cursor -ArgumentList "." -NoNewWindow
-    Write-Host "✅ Cursor opened! Check MCP status in the status bar." -ForegroundColor Green
+# Offer to open Cursor automatically (only if cursor command is available)
+if ($cursorPath) {
+    $openCursor = Read-Host "🤔 Open Cursor now? (y/N)"
+    if ($openCursor -match "^[Yy]$") {
+        Write-Host "🎯 Opening Cursor..." -ForegroundColor Blue
+        Start-Process cursor -ArgumentList "." -NoNewWindow
+        Write-Host "✅ Cursor opened! Check MCP status in the status bar." -ForegroundColor Green
+    }
+} else {
+    Write-Host "💡 Since Cursor is already running, just restart it to apply MCP configuration." -ForegroundColor Yellow
 }
 
 Write-Host ""

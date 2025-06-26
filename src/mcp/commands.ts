@@ -890,16 +890,16 @@ private async trackTaskTime(request: TrackTaskTimeRequest): Promise<MCPResponse>
       // Se gerou contexto, armazená-lo
       if (processed.context && processed.context.length > 0) {
         for (const ctx of processed.context) {
-          const contextText = `${ctx.title} ${ctx.content}`;
+          const contextText = `${ctx.title || 'Context'} ${ctx.content || ctx.text || ''}`;
           try {
             await this.storeDocument({
               command: 'storeDocument',
               content: contextText,
-              title: ctx.title,
-              tags: [`docling-context`, ...ctx.tags],
+              title: ctx.title || 'Generated Context',
+              tags: [`docling-context`, ...(ctx.tags || [])],
             });
           } catch (error) {
-            console.warn(`Failed to store context ${ctx.id}:`, error);
+            console.warn(`Failed to store context ${ctx.id || 'unknown'}:`, error);
           }
         }
       }
@@ -935,14 +935,14 @@ private async trackTaskTime(request: TrackTaskTimeRequest): Promise<MCPResponse>
     }
 
     try {
-      const result = await doclingService.convertDocument(filePath, { format });
+      const result = await doclingService.convertDocument(filePath, format);
 
       return {
         success: true,
         data: {
           content: result.content,
           metadata: result.metadata,
-          format: result.format,
+          format: result.metadata?.format || 'unknown',
           sourceFile: filePath,
         },
       };

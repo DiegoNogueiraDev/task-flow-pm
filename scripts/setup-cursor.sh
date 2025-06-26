@@ -9,11 +9,18 @@ if [ ! -f "package.json" ]; then
     exit 1
 fi
 
-# Check if Cursor is installed
+# Check if Cursor is installed or running
 if ! command -v cursor &> /dev/null; then
-    echo "❌ Cursor is not installed or not in PATH"
-    echo "💡 Download from: https://cursor.sh/"
-    exit 1
+    # Check if Cursor is running (common for AppImage installations)
+    if pgrep -f "cursor" > /dev/null 2>&1; then
+        echo "✅ Cursor is running (detected via process check)"
+    else
+        echo "❌ Cursor is not installed or not in PATH"
+        echo "💡 Download from: https://cursor.sh/"
+        exit 1
+    fi
+else
+    echo "✅ Cursor command found in PATH"
 fi
 
 # 1. Build the project
@@ -108,11 +115,15 @@ cat > .cursor/test-mcp.json << 'EOF'
 EOF
 
 # Test if Cursor can parse the config
-cursor --help > /dev/null 2>&1
-if [ $? -eq 0 ]; then
-    echo "✅ Cursor CLI is available"
+if command -v cursor &> /dev/null; then
+    cursor --help > /dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        echo "✅ Cursor CLI is available"
+    else
+        echo "⚠️  Cursor CLI found but might not support --help. MCP will still work."
+    fi
 else
-    echo "⚠️  Cursor CLI not found. MCP will still work when opening in Cursor GUI."
+    echo "⚠️  Cursor CLI not found in PATH. MCP will still work when opening in Cursor GUI."
 fi
 
 # Clean up test file
@@ -149,11 +160,11 @@ if [ -f ".mcp/graph.db" ]; then
     const Database = require('better-sqlite3');
     try {
       const db = new Database('.mcp/graph.db');
-      const stats = db.prepare('SELECT 
+      const stats = db.prepare(\`SELECT 
         COUNT(*) as total,
-        SUM(CASE WHEN status = \"pending\" THEN 1 ELSE 0 END) as pending,
-        SUM(CASE WHEN status = \"completed\" THEN 1 ELSE 0 END) as completed
-      FROM nodes').get();
+        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
+        SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed
+      FROM nodes\`).get();
       console.log(\`   📋 Total tasks: \${stats.total}\`);
       console.log(\`   ⏳ Pending: \${stats.pending}\`);  
       console.log(\`   ✅ Completed: \${stats.completed}\`);
@@ -168,11 +179,15 @@ fi
 echo
 echo "🚀 Ready to experience AI-powered development with Cursor + MCP Local!"
 
-# Offer to open Cursor automatically
-read -p "🤔 Open Cursor now? (y/N): " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo "🎯 Opening Cursor..."
-    cursor . &
-    echo "✅ Cursor opened! Check MCP status in the status bar."
+# Offer to open Cursor automatically (only if cursor command is available)
+if command -v cursor &> /dev/null; then
+    read -p "🤔 Open Cursor now? (y/N): " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        echo "🎯 Opening Cursor..."
+        cursor . &
+        echo "✅ Cursor opened! Check MCP status in the status bar."
+    fi
+else
+    echo "💡 Since you're already running Cursor, just restart it to apply MCP configuration."
 fi

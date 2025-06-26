@@ -19,13 +19,62 @@ try {
     exit 1
 }
 
-# Check if VS Code is installed
-try {
-    $codeVersion = code --version
-    Write-Host "✅ VS Code is installed" -ForegroundColor Green
-} catch {
-    Write-Host "❌ VS Code is not installed or not in PATH. Please install from https://code.visualstudio.com/" -ForegroundColor Red
-    exit 1
+# Check if VS Code is installed or running
+Write-Host "🔍 Checking VS Code installation..." -ForegroundColor Blue
+$vscodeFound = $false
+$vscodeCmd = $null
+
+# Check multiple common VS Code commands
+$vscodeCmd = Get-Command code -ErrorAction SilentlyContinue
+if ($vscodeCmd) {
+    Write-Host "✅ VS Code CLI found: code" -ForegroundColor Green
+    $vscodeFound = $true
+    $vscodeCmd = "code"
+} else {
+    $vscodeInsiders = Get-Command code-insiders -ErrorAction SilentlyContinue
+    if ($vscodeInsiders) {
+        Write-Host "✅ VS Code Insiders CLI found: code-insiders" -ForegroundColor Green
+        $vscodeFound = $true
+        $vscodeCmd = "code-insiders"
+    } else {
+        # Check if VS Code is running via process check
+        $vscodeProcess = Get-Process -Name "Code" -ErrorAction SilentlyContinue
+        if ($vscodeProcess) {
+            Write-Host "✅ VS Code is running (detected via process check)" -ForegroundColor Green
+            $vscodeFound = $true
+        } else {
+            # Check common installation paths
+            $commonPaths = @(
+                "$env:LOCALAPPDATA\Programs\Microsoft VS Code\Code.exe",
+                "$env:PROGRAMFILES\Microsoft VS Code\Code.exe"
+            )
+            
+            foreach ($path in $commonPaths) {
+                if (Test-Path $path) {
+                    Write-Host "✅ VS Code installation found at: $path" -ForegroundColor Green
+                    $vscodeFound = $true
+                    break
+                }
+            }
+        }
+    }
+}
+
+if (-Not $vscodeFound) {
+    Write-Host "❌ VS Code is not installed or not accessible" -ForegroundColor Red
+    Write-Host "💡 Install VS Code from one of these options:" -ForegroundColor Yellow
+    Write-Host "   • Download from: https://code.visualstudio.com/" -ForegroundColor Yellow
+    Write-Host "   • Use winget: winget install Microsoft.VisualStudioCode" -ForegroundColor Yellow
+    Write-Host "   • Use Chocolatey: choco install vscode" -ForegroundColor Yellow
+    Write-Host ""
+    $continueAnyway = Read-Host "🤔 Continue anyway? The setup will work but you'll need to install VS Code later. (y/N)"
+    if ($continueAnyway -notmatch "^[Yy]$") {
+        Write-Host "Setup cancelled. Please install VS Code first." -ForegroundColor Red
+        exit 1
+    }
+    Write-Host "⚠️  Continuing without VS Code... You can run this script again after installing." -ForegroundColor Yellow
+} else {
+    Write-Host "✅ VS Code detected successfully" -ForegroundColor Green
 }
 
 # 1. Install dependencies and build
@@ -199,24 +248,77 @@ try {
     }
 }
 
-# 8. Install recommended VS Code extensions
+# 8. Install recommended VS Code extensions and GitHub Copilot
 Write-Host "🔌 Installing recommended VS Code extensions..." -ForegroundColor Yellow
-$extensions = @(
-    "GitHub.copilot",
-    "ms-vscode.vscode-typescript-next",
-    "esbenp.prettier-vscode",
-    "ms-vscode.vscode-json",
-    "ms-vscode.vscode-eslint"
-)
 
-foreach ($extension in $extensions) {
-    Write-Host "Installing $extension..." -ForegroundColor Cyan
-    code --install-extension $extension --force 2>$null
+if ($vscodeCmd) {
+    Write-Host "🔍 Checking extensions with: $vscodeCmd" -ForegroundColor Blue
+    
+    # Check if GitHub Copilot is already installed
+    $copilotInstalled = & $vscodeCmd --list-extensions | Where-Object { $_ -match "github.copilot" }
+    if ($copilotInstalled) {
+        Write-Host "✅ GitHub Copilot extension found" -ForegroundColor Green
+        Write-Host "💡 Make sure you're signed in to GitHub Copilot" -ForegroundColor Cyan
+        Write-Host "   In VS Code: Ctrl+Shift+P → 'GitHub Copilot: Sign In'" -ForegroundColor Cyan
+    } else {
+        Write-Host "⚠️  GitHub Copilot extension not found" -ForegroundColor Yellow
+        Write-Host "   Install with: $vscodeCmd --install-extension GitHub.copilot" -ForegroundColor Cyan
+        Write-Host "   Or via marketplace: https://marketplace.visualstudio.com/items?itemName=GitHub.copilot" -ForegroundColor Cyan
+        Write-Host ""
+        $installCopilot = Read-Host "🤔 Install GitHub Copilot extension now? (y/N)"
+        if ($installCopilot -match "^[Yy]$") {
+            Write-Host "📦 Installing GitHub Copilot extension..." -ForegroundColor Blue
+            & $vscodeCmd --install-extension GitHub.copilot --force
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "✅ GitHub Copilot extension installed successfully" -ForegroundColor Green
+            } else {
+                Write-Host "❌ Failed to install extension. Please install manually." -ForegroundColor Red
+            }
+        }
+    }
+    
+    # Install other recommended extensions
+    Write-Host "📦 Installing other recommended extensions..." -ForegroundColor Blue
+    $extensions = @(
+        "ms-vscode.vscode-typescript-next",
+        "esbenp.prettier-vscode",
+        "ms-vscode.vscode-json",
+        "ms-vscode.vscode-eslint"
+    )
+    
+    foreach ($extension in $extensions) {
+        Write-Host "Installing $extension..." -ForegroundColor Cyan
+        & $vscodeCmd --install-extension $extension --force 2>$null
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "✅ $extension installed" -ForegroundColor Green
+        }
+    }
+} else {
+    if ($vscodeFound) {
+        Write-Host "⚠️  VS Code is installed but CLI is not available" -ForegroundColor Yellow
+        Write-Host "   Extensions can be installed manually from the marketplace" -ForegroundColor Cyan
+        Write-Host "   GitHub Copilot: https://marketplace.visualstudio.com/items?itemName=GitHub.copilot" -ForegroundColor Cyan
+    } else {
+        Write-Host "⚠️  VS Code not detected. Install VS Code first, then run this script again." -ForegroundColor Yellow
+    }
 }
 
 # 9. Initialize MCP project
 Write-Host "🚀 Initializing MCP project..." -ForegroundColor Yellow
-npm run cli init
+try {
+    npm run cli init
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "✅ MCP project initialized successfully" -ForegroundColor Green
+    } else {
+        Write-Host "⚠️  MCP initialization had issues but continuing setup..." -ForegroundColor Yellow
+        Write-Host "   You may need to fix TypeScript errors first" -ForegroundColor Cyan
+        Write-Host "   Run 'npm run build' to see detailed errors" -ForegroundColor Cyan
+    }
+} catch {
+    Write-Host "⚠️  MCP initialization had issues but continuing setup..." -ForegroundColor Yellow
+    Write-Host "   You may need to fix TypeScript errors first" -ForegroundColor Cyan
+    Write-Host "   Run 'npm run build' to see detailed errors" -ForegroundColor Cyan
+}
 
 # 10. Create example spec if it doesn't exist
 if (-Not (Test-Path "spec.md")) {
@@ -273,12 +375,21 @@ Write-Host "   - Use @mcp-context snippet in code files" -ForegroundColor White
 Write-Host "   - Ask Copilot: 'What's my next task?' and it will query MCP" -ForegroundColor White
 Write-Host ""
 
-# Ask if user wants to open VS Code
-$openVSCode = Read-Host "🤔 Open VS Code now? (y/N)"
-if ($openVSCode -eq "y" -or $openVSCode -eq "Y") {
-    Write-Host "🎯 Opening VS Code..." -ForegroundColor Green
-    code .
-    Write-Host "✅ VS Code opened! Check the status bar for MCP integration." -ForegroundColor Green
+# Ask if user wants to open VS Code (only if VS Code command is available)
+if ($vscodeCmd) {
+    $openVSCode = Read-Host "🤔 Open VS Code now? (y/N)"
+    if ($openVSCode -match "^[Yy]$") {
+        Write-Host "🎯 Opening VS Code..." -ForegroundColor Green
+        & $vscodeCmd .
+        Write-Host "✅ VS Code opened! Check the status bar for MCP integration." -ForegroundColor Green
+    }
+} else {
+    if ($vscodeFound) {
+        Write-Host "💡 Since VS Code is installed, you can open it manually" -ForegroundColor Yellow
+        Write-Host "   Open VS Code and use File → Open Folder to open this project" -ForegroundColor Cyan
+    } else {
+        Write-Host "💡 Install VS Code first, then run this script again to complete setup" -ForegroundColor Yellow
+    }
 }
 
 Write-Host ""
