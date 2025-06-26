@@ -4,6 +4,7 @@ import { TaskPlanner } from '../services/planner';
 import { Logger } from '../services/logger';
 import { EffortEstimator } from '../services/effort';
 import { ScaffoldGenerator } from '../services/scaffold';
+import { TimeTracker } from '../services/time-tracker';
 import { 
 MCPRequestTypes, 
 MCPResponse, 
@@ -18,7 +19,8 @@ ReflectTaskRequest,
 GenerateScaffoldRequest,
 HybridSearchRequest,
 StoreDocumentRequest,
-RetrieveContextRequest
+RetrieveContextRequest,
+TrackTaskTimeRequest
 } from './schema';
 import { randomUUID } from 'crypto';
 
@@ -27,12 +29,14 @@ private db: GraphDB;
 private embeddings: EmbeddingsService;
 private logger: Logger;
 private scaffoldGenerator: ScaffoldGenerator;
+private timeTracker: TimeTracker;
 
 constructor(db: GraphDB, embeddings: EmbeddingsService, logger: Logger) {
   this.db = db;
   this.embeddings = embeddings;
   this.logger = logger;
   this.scaffoldGenerator = new ScaffoldGenerator();
+  this.timeTracker = new TimeTracker(logger.isEnabled() ? (logger as any).esEndpoint : undefined);
 }
 
 async handleCommand(request: MCPRequestTypes): Promise<MCPResponse> {
@@ -60,6 +64,8 @@ async handleCommand(request: MCPRequestTypes): Promise<MCPResponse> {
         return await this.storeDocument(request as StoreDocumentRequest);
       case 'retrieveContext':
         return await this.retrieveContext(request as RetrieveContextRequest);
+      case 'trackTaskTime':
+        return await this.trackTaskTime(request as TrackTaskTimeRequest);
       default:
         return {
           success: false,
@@ -260,10 +266,36 @@ private async markTaskComplete(request: MarkTaskCompleteRequest): Promise<MCPRes
     calculatedActualMinutes
   );
 
+  // Auto-stop time tracking and get actual minutes from tracking
+  const trackedMinutes = await this.timeTracker.autoStopForTask(taskId);
+  if (trackedMinutes > 0 && !actualMinutes) {
+    // Update task with more accurate tracked time
+    const finalUpdatedTask = this.db.updateNode(taskId, {
+      actualMinutes: trackedMinutes,
+    });
+    
+    // Send final metrics to ELK
+    await this.timeTracker.sendTaskCompleteMetrics(taskId, task, trackedMinutes);
+    
+    return {
+      success: true,
+      data: {
+        task: finalUpdatedTask || updatedTask,
+        actualMinutes: trackedMinutes,
+        timeTracked: true,
+        variance: trackedMinutes ? 
+          ((trackedMinutes - task.estimateMinutes) / task.estimateMinutes) * 100 : 0,
+        learningStats: EffortEstimator.getLearningStats(this.db),
+      },
+    };
+  }
+
   return {
     success: true,
     data: {
       task: updatedTask,
+      actualMinutes: calculatedActualMinutes,
+      timeTracked: false,
       variance: calculatedActualMinutes ? 
         ((calculatedActualMinutes - task.estimateMinutes) / task.estimateMinutes) * 100 : 0,
       learningStats: EffortEstimator.getLearningStats(this.db),
@@ -334,12 +366,16 @@ private async beginTask(request: BeginTaskRequest): Promise<MCPResponse> {
   this.logger.logTaskStarted(taskId, task.estimateMinutes);
   this.logger.logTaskStatusChange(taskId, task.status, 'in-progress', task.estimateMinutes);
 
+  // Auto-start time tracking
+  await this.timeTracker.autoStartForTask(taskId, 'Auto-started when task began');
+
   return {
     success: true,
     data: {
       task: updatedTask,
       startedAt: startTime,
       estimatedCompletionTime: new Date(Date.now() + task.estimateMinutes * 60000).toISOString(),
+      timeTrackingStarted: true,
     },
   };
 }
@@ -671,6 +707,120 @@ private async retrieveContext(request: RetrieveContextRequest): Promise<MCPRespo
         searchType: 'text_fallback',
         fallbackUsed: true,
       },
+    };
+  }
+}
+
+private async trackTaskTime(request: TrackTaskTimeRequest): Promise<MCPResponse> {
+  const { taskId, action, context } = request;
+  
+  if (!taskId || !action) {
+    return {
+      success: false,
+      error: 'taskId and action are required',
+    };
+  }
+
+  // Verify task exists
+  const task = this.db.getNode(taskId);
+  if (!task) {
+    return {
+      success: false,
+      error: `Task with id ${taskId} not found`,
+    };
+  }
+
+  try {
+    let session;
+    let duration = 0;
+
+    switch (action) {
+      case 'start':
+        session = await this.timeTracker.startTracking(taskId, context);
+        return {
+          success: true,
+          data: {
+            action: 'started',
+            sessionId: session.id,
+            startTime: session.startTime.toISOString(),
+            message: `Time tracking started for task: ${task.title}`,
+          },
+        };
+
+      case 'stop':
+        session = await this.timeTracker.stopTracking(taskId);
+        if (session && session.endTime) {
+          duration = Math.round((session.endTime.getTime() - session.startTime.getTime() - session.pausedTime) / (1000 * 60));
+          
+          // Auto-update task with actual time
+          const actualTime = duration > 0 ? duration : 1; // Minimum 1 minute
+          
+          // Send completion metrics to ELK
+          await this.timeTracker.sendTaskCompleteMetrics(taskId, task, actualTime);
+          
+          return {
+            success: true,
+            data: {
+              action: 'stopped',
+              sessionId: session.id,
+              duration: duration,
+              actualMinutes: actualTime,
+              message: `Time tracking stopped. Duration: ${actualTime} minutes`,
+            },
+          };
+        } else {
+          return {
+            success: false,
+            error: 'No active tracking session found for this task',
+          };
+        }
+
+      case 'pause':
+        session = await this.timeTracker.pauseTracking(taskId);
+        if (session) {
+          return {
+            success: true,
+            data: {
+              action: 'paused',
+              sessionId: session.id,
+              message: 'Time tracking paused',
+            },
+          };
+        } else {
+          return {
+            success: false,
+            error: 'No active tracking session found to pause',
+          };
+        }
+
+      case 'resume':
+        session = await this.timeTracker.resumeTracking(taskId);
+        if (session) {
+          return {
+            success: true,
+            data: {
+              action: 'resumed',
+              sessionId: session.id,
+              message: 'Time tracking resumed',
+            },
+          };
+        } else {
+          return {
+            success: false,
+            error: 'No paused tracking session found to resume',
+          };
+        }
+
+      default:
+        return {
+          success: false,
+          error: `Unknown action: ${action}. Valid actions are: start, stop, pause, resume`,
+        };
+    }
+  } catch (error) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Time tracking operation failed',
     };
   }
 }

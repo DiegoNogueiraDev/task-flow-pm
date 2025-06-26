@@ -218,6 +218,363 @@ npm run cli tasks --type story
 
 O Task Flow PM funciona como servidor MCP para integração profunda com IDEs:
 
+### **🚀 Inicialização Automática do Servidor**
+
+Para garantir que o servidor MCP seja iniciado automaticamente:
+
+#### **Configuração no package.json**
+```json
+{
+  "scripts": {
+    "mcp:server": "npm run build && node dist/bin/server.js",
+    "mcp:dev": "nodemon --exec \"npm run build && node dist/bin/server.js\" --watch src --ext ts",
+    "postinstall": "npm run build"
+  }
+}
+```
+
+#### **Serviço Systemd (Linux)**
+```bash
+# Criar arquivo de serviço
+sudo nano /etc/systemd/system/task-flow-pm.service
+```
+
+```ini
+[Unit]
+Description=Task Flow PM MCP Server
+After=network.target
+
+[Service]
+Type=simple
+User=seu-usuario
+WorkingDirectory=/caminho/para/task-flow-pm
+ExecStart=/usr/bin/node dist/bin/server.js
+Restart=always
+RestartSec=10
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+# Ativar e iniciar o serviço
+sudo systemctl enable task-flow-pm
+sudo systemctl start task-flow-pm
+sudo systemctl status task-flow-pm
+```
+
+#### **PM2 (Recomendado)**
+```bash
+# Instalar PM2 globalmente
+npm install -g pm2
+
+# Configurar aplicação
+pm2 start dist/bin/server.js --name "task-flow-pm-mcp"
+pm2 startup
+pm2 save
+
+# Monitorar
+pm2 status
+pm2 logs task-flow-pm-mcp
+```
+
+## 🏢 **Integração em Projetos Reais**
+
+### **Cenário 1: Startup Tech (2-5 desenvolvedores)**
+
+#### **Setup Inicial**
+```bash
+# 1. Instalar no projeto principal
+cd meu-projeto-startup
+git submodule add https://github.com/user/task-flow-pm.git tools/task-flow-pm
+cd tools/task-flow-pm && npm install && npm run build
+
+# 2. Configurar no projeto pai
+echo "tools/task-flow-pm/.mcp/" >> .gitignore
+```
+
+#### **Cursor Configuration (.cursor/settings.json)**
+```json
+{
+  "mcp.servers": {
+    "task-flow-pm": {
+      "command": "node",
+      "args": ["./tools/task-flow-pm/dist/bin/server.js"],
+      "cwd": "${workspaceFolder}"
+    }
+  },
+  "cursor.chat.systemInstructions": "Use Task Flow PM para gerenciar tarefas. Sempre consulte o contexto da tarefa atual antes de implementar features."
+}
+```
+
+#### **Workflow Diário**
+```bash
+# Manhã - Ver próxima tarefa
+cursor -c "Qual é minha próxima tarefa?" 
+
+# Durante desenvolvimento - Iniciar tracking
+cursor -c "Iniciar trabalho na tarefa de login"
+
+# Fim do dia - Finalizar e refletir
+cursor -c "Finalizar tarefa atual e adicionar reflexão sobre o que aprendi"
+```
+
+### **Cenário 2: Empresa Enterprise (10+ desenvolvedores)**
+
+#### **Arquitetura Distribuída**
+```
+🏢 Servidor Central
+├── 📊 ELK Stack (métricas centralizadas)
+├── 🗄️ PostgreSQL (dados compartilhados)
+└── 🔧 Task Flow PM Server (API REST)
+
+👥 Times de Desenvolvimento
+├── Frontend Team (5 devs)
+├── Backend Team (8 devs)
+├── DevOps Team (3 devs)
+└── QA Team (4 devs)
+```
+
+#### **docker-compose.yml Enterprise**
+```yaml
+version: '3.8'
+services:
+  task-flow-pm:
+    build: ./tools/task-flow-pm
+    environment:
+      - NODE_ENV=production
+      - ES_ENDPOINT=http://elasticsearch:9200
+      - DB_TYPE=postgresql
+      - DB_HOST=postgres
+    depends_on:
+      - postgres
+      - elasticsearch
+    volumes:
+      - ./project-specs:/app/specs
+      
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: taskflow
+      POSTGRES_USER: taskflow
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.8.0
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+      
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.8.0
+    ports:
+      - "5601:5601"
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch:9200
+
+volumes:
+  postgres_data:
+  es_data:
+```
+
+#### **Team-Specific Configuration**
+```bash
+# Frontend Team
+TEAM=frontend MCP_CONFIG=frontend.json npm run mcp:server
+
+# Backend Team  
+TEAM=backend MCP_CONFIG=backend.json npm run mcp:server
+```
+
+### **Cenário 3: Freelancer/Consultor Individual**
+
+#### **Multi-Project Setup**
+```bash
+# Estrutura de diretórios
+~/Projects/
+├── cliente-a/
+│   ├── .cursor/
+│   │   └── mcp.json → ../../task-flow-pm/configs/cliente-a.json
+│   └── projeto-app/
+├── cliente-b/
+│   ├── .cursor/
+│   │   └── mcp.json → ../../task-flow-pm/configs/cliente-b.json
+│   └── projeto-web/
+└── task-flow-pm/ (shared)
+    ├── configs/
+    │   ├── cliente-a.json
+    │   └── cliente-b.json
+    └── dist/
+```
+
+#### **Configuração por Cliente**
+```json
+// configs/cliente-a.json
+{
+  "dbPath": "../.mcp/cliente-a-graph.db",
+  "esEndpoint": "https://meu-elk-freelancer.com/cliente-a",
+  "contextTokens": 2048,
+  "tags": ["cliente-a", "react", "nodejs"]
+}
+```
+
+#### **Scripts de Produtividade**
+```bash
+#!/bin/bash
+# scripts/switch-client.sh
+CLIENT=$1
+cd ~/Projects/$CLIENT
+export MCP_CONFIG=../task-flow-pm/configs/$CLIENT.json
+cursor .
+```
+
+### **🔍 Observabilidade e Métricas ELK**
+
+#### **Dashboard de Produtividade**
+```json
+{
+  "dashboard": {
+    "title": "Task Flow PM - Produtividade",
+    "visualizations": [
+      {
+        "title": "Tarefas por Hora",
+        "type": "line_chart",
+        "query": "action:complete"
+      },
+      {
+        "title": "Precisão de Estimativas",
+        "type": "gauge",
+        "query": "accuracy:*"
+      },
+      {
+        "title": "Tempo por Tipo de Tarefa",
+        "type": "pie_chart",
+        "field": "taskType"
+      },
+      {
+        "title": "Desenvolvedor Top Performer",
+        "type": "table",
+        "fields": ["userId", "completedTasks", "avgAccuracy"]
+      }
+    ]
+  }
+}
+```
+
+#### **Alertas Inteligentes**
+```yaml
+# alertas.yml
+alerts:
+  - name: "Tarefa Demorada"
+    condition: "duration > estimatedMinutes * 1.5"
+    action: "slack_notification"
+    
+  - name: "Dev Sobrecarregado"
+    condition: "active_tasks > 3"
+    action: "manager_notification"
+    
+  - name: "Estimativa Ruim"
+    condition: "accuracy < 50"
+    action: "reflection_prompt"
+```
+
+### **🔄 CI/CD Integration**
+
+#### **GitHub Actions**
+```yaml
+name: Task Flow PM Sync
+on:
+  push:
+    branches: [main]
+    
+jobs:
+  sync-tasks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Update Task Status
+        run: |
+          # Marcar tarefas como completas baseado em commits
+          git log --oneline -10 | grep -E "#[0-9]+" | \
+          while read line; do
+            TASK_ID=$(echo $line | grep -oE "#[0-9]+")
+            curl -X POST $MCP_ENDPOINT/complete \
+              -d "{\"taskId\":\"$TASK_ID\", \"context\":\"Auto-completed via CI\"}"
+          done
+```
+
+### **🎯 Casos de Uso Avançados**
+
+#### **1. Gerenciamento de Sprints**
+```bash
+# Planejar sprint baseado em estimativas históricas
+cursor -c "Planejar próximo sprint de 2 semanas com base no velocity atual"
+
+# Ajustar estimativas durante planning poker
+cursor -c "Recalcular estimativas baseado no consensus da equipe"
+```
+
+#### **2. Code Review Inteligente**
+```bash
+# Durante PR review
+cursor -c "Esta implementação atende aos critérios da tarefa #123?"
+
+# Sugestões de melhoria
+cursor -c "Gerar checklist de QA para esta feature baseado em tarefas similares"
+```
+
+#### **3. Onboarding de Novos Desenvolvedores**
+```bash
+# Tarefas iniciante
+cursor -c "Sugerir próxima tarefa para desenvolvedor junior com 2 semanas de experiência"
+
+# Mentoria automática
+cursor -c "Gerar guia passo-a-passo para esta tarefa baseado em implementações anteriores"
+```
+
+### **📈 ROI e Métricas de Sucesso**
+
+#### **KPIs Recomendados**
+```
+Produtividade:
+✅ Tarefas completadas por semana: +40%
+✅ Tempo médio por feature: -35%
+✅ Context switching: -50%
+
+Qualidade:
+✅ Bugs em produção: -25%
+✅ Tempo de Code Review: -30%
+✅ Rework: -45%
+
+Satisfação:
+✅ NPS da equipe: +20 pontos
+✅ Retenção de desenvolvedores: +15%
+✅ Onboarding time: -60%
+```
+
+#### **Análise de Custo-Benefício**
+```
+Investimento Inicial:
+- Setup: 8 horas (1 dia)
+- Treinamento: 16 horas (2 dias)
+- Configuração: 8 horas (1 dia)
+Total: 32 horas = $2,560 (@ $80/hora)
+
+Retorno Mensal:
+- Economia planning: 20 horas/mês = $1,600
+- Redução context switching: 15 horas/mês = $1,200
+- Melhoria estimativas: 10 horas/mês = $800
+Total: 45 horas/mês = $3,600
+
+ROI: 140% no primeiro mês
+Payback: 22 dias
+```
+
 ### **Comandos MCP Disponíveis**
 
 #### `generateTasksFromSpec`

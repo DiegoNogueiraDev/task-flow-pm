@@ -163,6 +163,27 @@ export class Logger {
     this.logEvent(event);
   }
 
+  async logTimeTracking(metrics: any): Promise<void> {
+    const event: MetricEvent = {
+      type: 'time_tracking',
+      taskId: metrics.taskId,
+      timestamp: metrics.timestamp,
+      metadata: {
+        action: metrics.action,
+        duration: metrics.duration,
+        context: metrics.context,
+        sessionId: metrics.sessionId,
+        taskTitle: metrics.taskTitle,
+        taskType: metrics.taskType,
+        estimatedMinutes: metrics.estimatedMinutes,
+        actualMinutes: metrics.actualMinutes,
+        accuracy: metrics.accuracy
+      }
+    };
+
+    this.logEvent(event);
+  }
+
   isEnabled(): boolean {
     return this.enabled;
   }

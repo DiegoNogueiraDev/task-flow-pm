@@ -14,6 +14,8 @@
     "build:cli": "esbuild bin/mcp-unified.ts --bundle --platform=node --outdir=dist/bin --format=cjs --target=node18 --external:better-sqlite3 --external:sqlite3",
     "build:i18n": "tsc src/i18n/index.ts --outDir dist/src/i18n --target es2020 --module commonjs",
     "dev": "ts-node bin/server.ts",
+    "mcp:server": "npm run build && node dist/bin/server.js",
+    "mcp:diagnose": "./scripts/diagnose-mcp.sh",
     "cli": "ts-node bin/mcp-unified.ts",
     "cli-pt": "LANG=pt_BR.UTF-8 ts-node bin/mcp-unified.ts",
     "cli-en": "LANG=en_US.UTF-8 ts-node bin/mcp-unified.ts",

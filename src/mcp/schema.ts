@@ -114,7 +114,7 @@ export interface MCPConfig {
   }
   
   export interface MetricEvent {
-    type: 'task_created' | 'task_started' | 'task_completed' | 'task_status_change' | 'reflection_added';
+    type: 'task_created' | 'task_started' | 'task_completed' | 'task_status_change' | 'reflection_added' | 'time_tracking';
     taskId: string;
     oldStatus?: string;
     newStatus?: string;
@@ -122,6 +122,7 @@ export interface MCPConfig {
     actualMinutes?: number;
     timestamp: string;
     note?: string;
+    metadata?: Record<string, any>;
   }
   
   export interface TaskReflection {
@@ -144,6 +145,38 @@ export interface MCPConfig {
     finalScore: number;
   }
   
+  export interface TrackTaskTimeRequest {
+    command: 'trackTaskTime';
+    taskId: string;
+    action: 'start' | 'stop' | 'pause' | 'resume';
+    context?: string;
+  }
+  
+  export interface TimeTrackingSession {
+    id: string;
+    taskId: string;
+    startTime: Date;
+    endTime?: Date;
+    pausedTime: number; // milliseconds
+    context?: string;
+    status: 'active' | 'paused' | 'completed';
+  }
+  
+  export interface ELKMetrics {
+    timestamp: string;
+    taskId: string;
+    action: string;
+    duration?: number; // milliseconds
+    context?: string;
+    taskTitle?: string;
+    taskType?: string;
+    estimatedMinutes?: number;
+    actualMinutes?: number;
+    accuracy?: number; // percentage
+    userId?: string;
+    sessionId: string;
+  }
+  
   export type MCPRequestTypes = 
     | GenerateTasksRequest
     | ListTasksRequest
@@ -155,4 +188,5 @@ export interface MCPConfig {
     | GenerateScaffoldRequest
     | HybridSearchRequest
     | StoreDocumentRequest
-    | RetrieveContextRequest;
+    | RetrieveContextRequest
+    | TrackTaskTimeRequest;
