@@ -156,12 +156,12 @@ export class EffortEstimator {
     
     // Large task recommendations
     if (estimateMinutes > 240) { // More than 4 hours
-      recommendations.push('Consider breaking this into smaller subtasks');
+      recommendations.push('Consider breaking this into smaller tasks');
     }
     
     // Epic-specific recommendations
-    if (type === 'epic' && estimateMinutes > 120) { // More than 2 hours for epics
-      recommendations.push('This task is quite large - break into stories first');
+    if (estimateMinutes > 480 || (type === 'epic' && estimateMinutes > 120)) { // More than 8 hours or epic > 2h
+      recommendations.push('This task is quite large - break into stories or epics');
     }
     
     // Small task recommendations  

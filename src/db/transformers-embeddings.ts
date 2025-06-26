@@ -61,7 +61,7 @@ export class TransformersEmbeddingsService {
       }
 
     } catch (error) {
-      logger.error('❌ Failed to initialize Transformers.js pipeline:', error);
+      console.error('❌ Failed to initialize Transformers.js pipeline:', error);
       throw error;
     }
   }
@@ -269,7 +269,7 @@ export class TransformersEmbeddingsService {
    */
   clearCache(): void {
     this.embeddingCache.clear();
-    logger.info('🧹 Embedding cache cleared');
+    console.log('🧹 Embedding cache cleared');
   }
 
   /**
