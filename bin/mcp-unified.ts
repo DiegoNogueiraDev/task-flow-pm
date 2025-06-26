@@ -9,7 +9,7 @@ import { EmbeddingsService } from '../src/db/embeddings';
 import { Logger } from '../src/services/logger';
 import { MCPCommandHandler } from '../src/mcp/commands';
 import { MCPConfig } from '../src/mcp/schema';
-import { i18n, I18n, SupportedLocale, detectLocale } from '../src/i18n';
+import { I18n, SupportedLocale } from '../src/i18n/index';
 
 class UnifiedMCPCLI {
   private config: MCPConfig;
@@ -21,7 +21,7 @@ class UnifiedMCPCLI {
 
   constructor(locale?: SupportedLocale) {
     // Auto-detect or use provided locale
-    const detectedLocale = locale || this.detectLocaleFromCommand() || detectLocale();
+    const detectedLocale = locale || this.detectLocaleFromCommand();
     this.i18n = new I18n(detectedLocale);
     
     this.config = this.loadConfig();
@@ -32,7 +32,12 @@ class UnifiedMCPCLI {
     this.commandHandler = new MCPCommandHandler(this.db, this.embeddings, this.logger);
   }
 
-  private detectLocaleFromCommand(): SupportedLocale | null {
+  private detectLocaleFromCommand(): SupportedLocale {
+    // Check explicit MCP language setting first
+    if (process.env.MCP_LANG) {
+      return process.env.MCP_LANG === 'pt-BR' ? 'pt-BR' : 'en';
+    }
+    
     const scriptName = process.argv[1];
     if (scriptName.includes('mcp-pt') || scriptName.includes('pt')) {
       return 'pt-BR';
@@ -40,7 +45,9 @@ class UnifiedMCPCLI {
     if (scriptName.includes('mcp-en') || scriptName.includes('en')) {
       return 'en';
     }
-    return null;
+    
+    // Default to English
+    return 'en';
   }
 
   private loadConfig(): MCPConfig {
@@ -95,7 +102,7 @@ class UnifiedMCPCLI {
     console.log(this.i18n.t('cli.init.success'));
     console.log(`📁 Config created at: ${configPath}`);
     console.log(`📊 Database will be stored at: ${defaultConfig.dbPath}`);
-    console.log('\n' + this.i18n.t('cli.init.nextSteps').join('\n'));
+    console.log('\n' + this.i18n.getArray('cli.init.nextSteps').join('\n'));
   }
 
   async plan(specFile: string): Promise<void> {
@@ -119,7 +126,7 @@ class UnifiedMCPCLI {
 
     const { tasksCreated, dependenciesCreated } = response.data;
     console.log(this.i18n.t('cli.planning.success', tasksCreated, dependenciesCreated));
-    console.log('\n' + this.i18n.t('cli.workflow.nextSteps').join('\n'));
+    console.log('\n' + this.i18n.getArray('cli.workflow.nextSteps').join('\n'));
   }
 
   async listTasks(status?: string): Promise<void> {
@@ -275,7 +282,30 @@ class UnifiedMCPCLI {
     return statusMap[localizedStatus as keyof typeof statusMap] || localizedStatus;
   }
 
-  // Additional methods: beginTask, markDone, reflect, etc. following same pattern...
+  async markTaskComplete(taskId: string, actualMinutes?: number): Promise<void> {
+    const response = await this.commandHandler.handleCommand({
+      command: 'markTaskComplete',
+      taskId,
+      actualMinutes,
+    });
+
+    if (!response.success) {
+      console.error('❌ Failed to mark task complete:', response.error);
+      process.exit(1);
+    }
+
+    const { task, completedAt, variance } = response.data;
+    
+    console.log(this.i18n.t('cli.workflow.taskCompleted', task.title));
+    console.log(`✅ Concluída em: ${new Date(completedAt).toLocaleString(this.i18n.getLocale())}`);
+    if (actualMinutes) {
+      console.log(`⏱️  Tempo real: ${actualMinutes} minutos`);
+      if (variance) {
+        console.log(`📊 Variação: ${variance > 0 ? '+' : ''}${variance.toFixed(1)} minutos`);
+      }
+    }
+  }
+
   async beginTask(taskId: string): Promise<void> {
     const response = await this.commandHandler.handleCommand({
       command: 'beginTask',
@@ -298,7 +328,24 @@ class UnifiedMCPCLI {
 
 // Setup CLI with locale detection
 function setupCLI() {
-  const locale = detectLocale();
+  // Enhanced locale detection
+  function detectSystemLocale(): SupportedLocale {
+    // Check for explicit MCP language setting first
+    if (process.env.MCP_LANG) {
+      return process.env.MCP_LANG === 'pt-BR' ? 'pt-BR' : 'en';
+    }
+    
+    // Check system environment
+    const envLang = process.env.LANG || process.env.LANGUAGE || process.env.LC_ALL || '';
+    
+    if (envLang.includes('pt') || envLang.includes('BR')) {
+      return 'pt-BR';
+    }
+    
+    return 'en';
+  }
+  
+  const locale = detectSystemLocale();
   const cli = new UnifiedMCPCLI(locale);
   
   // Command aliases based on locale
@@ -368,6 +415,23 @@ function setupCLI() {
         });
       },
       (argv) => cli.beginTask(argv.taskId)
+    )
+    .command(
+      isPortuguese ? ['concluir <taskId> [minutes]', 'finalizar <taskId> [minutes]'] : ['complete <taskId> [minutes]', 'done <taskId> [minutes]'],
+      isPortuguese ? 'Marcar tarefa como concluída' : 'Mark task as completed',
+      (yargs) => {
+        return yargs
+          .positional('taskId', {
+            describe: isPortuguese ? 'ID da tarefa para concluir' : 'Task ID to complete',
+            type: 'string',
+            demandOption: true,
+          })
+          .positional('minutes', {
+            describe: isPortuguese ? 'Minutos gastos na tarefa' : 'Minutes spent on task',
+            type: 'number',
+          });
+      },
+      (argv) => cli.markTaskComplete(argv.taskId, argv.minutes)
     )
     .demandCommand(1, isPortuguese ? 'Você precisa de pelo menos um comando' : 'You need at least one command')
     .help(isPortuguese ? 'ajuda' : 'help')

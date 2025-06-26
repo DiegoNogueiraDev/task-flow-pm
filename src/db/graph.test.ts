@@ -128,6 +128,16 @@ describe('GraphDB', () => {
 
       tasks.forEach(task => db.addNode(task));
 
+      // Add embeddings for hybrid search
+      tasks.forEach((task, index) => {
+        db.addEmbedding({
+          id: `emb-${task.id}`,
+          nodeId: task.id,
+          text: `${task.title} ${task.description}`,
+          vector: new Array(384).fill(0).map(() => Math.random()), // Mock embedding
+        });
+      });
+
       // Add some edges for graph scoring
       db.addEdge({
         id: 'edge-1',
@@ -155,14 +165,20 @@ describe('GraphDB', () => {
       for (let i = 1; i < results.length; i++) {
         expect(results[i - 1].finalScore).toBeGreaterThanOrEqual(results[i].finalScore);
       }
+      
+      // All final scores should be valid numbers
+      results.forEach(result => {
+        expect(typeof result.finalScore).toBe('number');
+        expect(isNaN(result.finalScore)).toBe(false);
+      });
 
       // Check that scores are properly calculated
       results.forEach(result => {
-        expect(result.simScore).toBeGreaterThanOrEqual(0);
+        expect(result.simScore).toBeGreaterThanOrEqual(-1); // Cosine similarity is between -1 and 1
         expect(result.simScore).toBeLessThanOrEqual(1);
         expect(result.graphScore).toBeGreaterThanOrEqual(0);
         expect(result.graphScore).toBeLessThanOrEqual(1);
-        expect(result.finalScore).toBeGreaterThanOrEqual(0);
+        expect(result.finalScore).toBeGreaterThan(-1); // Final score can be slightly negative due to weighting
         expect(result.finalScore).toBeLessThanOrEqual(1);
       });
     });

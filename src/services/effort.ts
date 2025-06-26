@@ -150,4 +150,25 @@ export class EffortEstimator {
       totalCompletedTasks: variances.length,
     };
   }
+
+  static getRecommendedBreakdown(estimateMinutes: number, type: string = 'task'): string[] {
+    const recommendations: string[] = [];
+    
+    // Large task recommendations
+    if (estimateMinutes > 240) { // More than 4 hours
+      recommendations.push('Consider breaking this into smaller subtasks');
+    }
+    
+    // Epic-specific recommendations
+    if (type === 'epic' && estimateMinutes > 120) { // More than 2 hours for epics
+      recommendations.push('This task is quite large - break into stories first');
+    }
+    
+    // Small task recommendations  
+    if (estimateMinutes < 15) {
+      recommendations.push('Consider combining with other small tasks');
+    }
+    
+    return recommendations;
+  }
 }

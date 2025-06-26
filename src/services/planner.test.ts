@@ -16,7 +16,7 @@ Main user interface after login
 
       const result = await TaskPlanner.plan(spec);
 
-      expect(result.tasks).toHaveLength.greaterThan(0);
+      expect(result.tasks.length).toBeGreaterThan(0);
       expect(result.dependencies).toBeDefined();
       
       // Should have at least one epic

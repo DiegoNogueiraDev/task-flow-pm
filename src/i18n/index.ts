@@ -293,6 +293,18 @@ export class I18n {
     return value || path;
   }
 
+  // Get array values directly
+  getArray(path: string): string[] {
+    const keys = path.split('.');
+    let value: any = this.strings;
+    
+    for (const key of keys) {
+      value = value?.[key];
+    }
+    
+    return Array.isArray(value) ? value : [value || path];
+  }
+
   // Get command name for MCP
   getCommand(englishCommand: string): string {
     const commandMap = Object.fromEntries(
