@@ -263,7 +263,7 @@ export const ptBR: LocalizedStrings = {
 
 // Locale registry
 const locales: Record<SupportedLocale, LocalizedStrings> = {
-  'en': en,
+  en,
   'pt-BR': ptBR
 };
 

@@ -4,10 +4,10 @@
  */
 
 export class JSEmbeddingsService {
-    private vectorDimension: number = 384;
+    private vectorDimension = 384;
     private vocabulary: Map<string, number> = new Map();
     private idfScores: Map<string, number> = new Map();
-    private documentCount: number = 0;
+    private documentCount = 0;
   
     constructor() {
       // Initialize with common technical vocabulary

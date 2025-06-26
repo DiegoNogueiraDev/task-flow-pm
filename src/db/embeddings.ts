@@ -3,11 +3,11 @@ import { JSEmbeddingsService } from './embeddings-js';
 
 export class EmbeddingsService {
   private modelName: string;
-  private vectorDimension: number = 384; // MiniLM default dimension
+  private vectorDimension = 384; // MiniLM default dimension
   private jsEmbeddings: JSEmbeddingsService;
   private pythonAvailable: boolean | null = null;
 
-  constructor(modelName: string = 'all-MiniLM-L6-v2') {
+  constructor(modelName = 'all-MiniLM-L6-v2') {
     this.modelName = modelName;
     this.jsEmbeddings = new JSEmbeddingsService();
   }

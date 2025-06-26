@@ -151,7 +151,7 @@ export class EffortEstimator {
     };
   }
 
-  static getRecommendedBreakdown(estimateMinutes: number, type: string = 'task'): string[] {
+  static getRecommendedBreakdown(estimateMinutes: number, type = 'task'): string[] {
     const recommendations: string[] = [];
     
     // Large task recommendations

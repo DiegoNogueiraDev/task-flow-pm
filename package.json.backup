@@ -1,6 +1,5 @@
 {
   "name": "mcp-local",
-  "type": "module",
   "version": "1.0.0",
   "description": "Local-first Model Context Protocol server with embedded knowledge graph",
   "main": "dist/bin/server.js",
@@ -39,10 +38,6 @@
     "setup:vscode:unix": "bash scripts/setup-vscode.sh",
     "lint": "eslint src/**/*.ts bin/*.ts --fix",
     "format": "prettier --write src/**/*.ts bin/*.ts",
-    "test:integration": "echo 'Integration tests não implementados ainda'",
-    "docs:generate": "echo 'Documentação será gerada em versões futuras'",
-    "docs:api": "echo 'API docs será gerada em versões futuras'",
-    "test:performance": "echo 'Performance tests não implementados ainda'",
     "prepare": "npm run build"
   },
   "keywords": [

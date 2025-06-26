@@ -23,10 +23,10 @@ interface EnhancedConversionResult extends ConversionResult {
 
 export class EnhancedDoclingService extends DoclingService {
   private ocrWorker: Worker | null = null;
-  private ocrEnabled: boolean = true;
+  private ocrEnabled = true;
   private readonly supportedImageFormats = ['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.tiff'];
 
-  constructor(ocrEnabled: boolean = true) {
+  constructor(ocrEnabled = true) {
     super();
     this.ocrEnabled = ocrEnabled;
   }
@@ -46,7 +46,7 @@ export class EnhancedDoclingService extends DoclingService {
   /**
    * 📄 Enhanced document conversion with OCR support
    */
-  async convertDocumentWithOCR(filePath: string, format: string = 'markdown'): Promise<EnhancedConversionResult> {
+  async convertDocumentWithOCR(filePath: string, format = 'markdown'): Promise<EnhancedConversionResult> {
     const startTime = Date.now();
     
     try {

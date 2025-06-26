@@ -1,0 +1,27 @@
+server.name: "taskflow-kibana"
+server.host: "0.0.0.0"
+server.port: 5601
+
+elasticsearch.hosts: ["http://elasticsearch:9200"]
+
+# Security settings
+xpack.security.enabled: false
+xpack.encryptedSavedObjects.encryptionKey: "a7a6311933d3503b89bc2dbc36572c7a"
+
+# UI settings
+server.publicBaseUrl: "http://localhost:5601"
+logging.appenders.file.type: file
+logging.appenders.file.fileName: /var/log/kibana.log
+logging.appenders.file.layout.type: json
+
+# Task Flow PM specific settings
+kibana.index: ".kibana-taskflow"
+kibana.defaultAppId: "dashboard"
+
+# Dashboard auto-load
+kibana.autocompleteTimeout: 1000
+kibana.autocompleteTerminateAfter: 100000
+
+# Monitoring
+monitoring.ui.enabled: true
+monitoring.kibana.collection.enabled: true 

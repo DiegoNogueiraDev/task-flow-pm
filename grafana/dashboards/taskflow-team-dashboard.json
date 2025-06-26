@@ -1,0 +1,136 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "🚀 Task Flow PM - Team Monitoring Dashboard",
+    "tags": ["taskflow", "team", "productivity"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "📊 Tasks Completed Today",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "count(task_completed_total)",
+            "refId": "A",
+            "datasource": "TaskFlow Elasticsearch"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 6, "x": 0, "y": 0},
+        "options": {
+          "colorMode": "background",
+          "graphMode": "area",
+          "justifyMode": "center",
+          "orientation": "horizontal"
+        }
+      },
+      {
+        "id": 2,
+        "title": "⏱️ Average Task Duration",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "avg(task_duration_seconds)",
+            "refId": "A",
+            "datasource": "TaskFlow Elasticsearch"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 6, "x": 6, "y": 0},
+        "options": {
+          "unit": "s",
+          "colorMode": "background"
+        }
+      },
+      {
+        "id": 3,
+        "title": "👥 Active Team Members",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "count(distinct(user_id))",
+            "refId": "A",
+            "datasource": "TaskFlow Elasticsearch"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 6, "x": 12, "y": 0}
+      },
+      {
+        "id": 4,
+        "title": "🎯 Team Productivity Score",
+        "type": "gauge",
+        "targets": [
+          {
+            "expr": "avg(productivity_score)",
+            "refId": "A",
+            "datasource": "TaskFlow Elasticsearch"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 6, "x": 18, "y": 0},
+        "options": {
+          "min": 0,
+          "max": 100,
+          "unit": "percent"
+        }
+      },
+      {
+        "id": 5,
+        "title": "📈 Task Completion Rate Over Time",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "rate(task_completed_total[5m])",
+            "refId": "A",
+            "datasource": "TaskFlow Elasticsearch"
+          }
+        ],
+        "gridPos": {"h": 10, "w": 12, "x": 0, "y": 8}
+      },
+      {
+        "id": 6,
+        "title": "🏆 Top Performers",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "topk(10, count by (user_id)(task_completed_total))",
+            "refId": "A",
+            "datasource": "TaskFlow Elasticsearch"
+          }
+        ],
+        "gridPos": {"h": 10, "w": 12, "x": 12, "y": 8}
+      },
+      {
+        "id": 7,
+        "title": "🌍 Team Geographic Distribution",
+        "type": "geomap",
+        "targets": [
+          {
+            "expr": "count by (geoip_location)(user_activity)",
+            "refId": "A",
+            "datasource": "TaskFlow Elasticsearch"
+          }
+        ],
+        "gridPos": {"h": 12, "w": 24, "x": 0, "y": 18}
+      },
+      {
+        "id": 8,
+        "title": "📋 Recent Team Activity",
+        "type": "logs",
+        "targets": [
+          {
+            "expr": "{job=\"taskflow\"}",
+            "refId": "A",
+            "datasource": "TaskFlow Elasticsearch"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 30}
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "30s",
+    "schemaVersion": 30,
+    "version": 1
+  }
+} 

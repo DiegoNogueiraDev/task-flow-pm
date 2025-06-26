@@ -80,7 +80,7 @@ export class DoclingService {
   /**
    * Converte documento usando processadores Node.js nativos
    */
-  async convertDocument(filePath: string, format: string = 'markdown'): Promise<ConversionResult> {
+  async convertDocument(filePath: string, format = 'markdown'): Promise<ConversionResult> {
     try {
       logger.log('info', `Converting document: ${filePath}`);
       
@@ -424,7 +424,7 @@ export class DoclingService {
     return `doc_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
 
-  private jsonToText(obj: any, depth: number = 0): string {
+  private jsonToText(obj: any, depth = 0): string {
     const indent = '  '.repeat(depth);
     
     if (typeof obj === 'object' && obj !== null) {

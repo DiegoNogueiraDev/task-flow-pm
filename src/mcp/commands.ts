@@ -773,7 +773,7 @@ private async trackTaskTime(request: TrackTaskTimeRequest): Promise<MCPResponse>
             data: {
               action: 'stopped',
               sessionId: session.id,
-              duration: duration,
+              duration,
               actualMinutes: actualTime,
               message: `Time tracking stopped. Duration: ${actualTime} minutes`,
             },

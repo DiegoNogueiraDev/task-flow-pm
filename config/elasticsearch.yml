@@ -1,0 +1,33 @@
+cluster.name: "taskflow-cluster"
+node.name: "taskflow-node-1"
+
+# Network settings
+network.host: 0.0.0.0
+http.port: 9200
+transport.port: 9300
+
+# Discovery settings
+discovery.type: single-node
+cluster.initial_master_nodes: ["taskflow-node-1"]
+
+# Security settings (disabled for development)
+xpack.security.enabled: false
+xpack.security.enrollment.enabled: false
+xpack.security.http.ssl.enabled: false
+xpack.security.transport.ssl.enabled: false
+
+# Performance settings
+bootstrap.memory_lock: true
+indices.query.bool.max_clause_count: 10000
+
+# Task Flow PM specific indices
+action.auto_create_index: true
+index.number_of_shards: 1
+index.number_of_replicas: 0
+
+# Monitoring settings
+xpack.monitoring.enabled: true
+xpack.monitoring.collection.enabled: true
+
+# Logging
+logger.org.elasticsearch.deprecation: warn 

@@ -250,7 +250,7 @@ export class MCPCommandHandlerPortugues {
     });
   }
 
-  async buscarTarefas(consulta: string, limite: number = 5): Promise<RespostaMCP> {
+  async buscarTarefas(consulta: string, limite = 5): Promise<RespostaMCP> {
     return this.processarComando({
       comando: 'buscaHibrida',
       consulta,

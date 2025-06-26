@@ -18,7 +18,6 @@ export default [
     rules: {
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-unused-vars': 'error',
-      '@typescript-eslint/prefer-const': 'error',
       '@typescript-eslint/no-inferrable-types': 'warn',
       'no-console': 'off', // Allow console.log for CLI tools
       'prefer-template': 'error',

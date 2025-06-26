@@ -96,7 +96,7 @@ export class TaskPlanner {
           priority: this.extractPriority(trimmed),
         };
       } else if (currentSection) {
-        currentSection.content += trimmed + '\n';
+        currentSection.content += `${trimmed  }\n`;
       }
     }
 

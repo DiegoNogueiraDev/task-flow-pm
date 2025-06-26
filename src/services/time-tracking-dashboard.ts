@@ -39,7 +39,7 @@ export class TimeTrackingDashboard {
   private db: GraphDB;
   private timeTracker: TimeTracker;
   private metricsCache: DashboardMetrics | null = null;
-  private cacheExpiry: number = 0;
+  private cacheExpiry = 0;
   private readonly CACHE_DURATION = 30000; // 30 seconds
 
   constructor(db: GraphDB, timeTracker: TimeTracker) {

@@ -217,8 +217,8 @@ export class TransformersEmbeddingsService {
   findSimilar(
     queryEmbedding: number[], 
     candidateEmbeddings: Array<{id: string, embedding: number[]}>,
-    topK: number = 5,
-    threshold: number = 0.7
+    topK = 5,
+    threshold = 0.7
   ): Array<{id: string, similarity: number}> {
     const startTime = Date.now();
     

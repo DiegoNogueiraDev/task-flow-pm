@@ -422,7 +422,7 @@ export class OptimizedGraphDB {
    * PageRank adaptation for task importance
    * Target: Stable rankings in <100ms
    */
-  calculateTaskPageRank(iterations: number = 10): Array<{nodeId: string, pageRank: number}> {
+  calculateTaskPageRank(iterations = 10): Array<{nodeId: string, pageRank: number}> {
     const startTime = Date.now();
     
     // Initialize PageRank table
@@ -491,9 +491,9 @@ export class OptimizedGraphDB {
   } {
     const stats = {
       isOptimized: this.isOptimized,
-      cacheSize: this.db.pragma('cache_size', { simple: true }) + ' KB',
+      cacheSize: `${this.db.pragma('cache_size', { simple: true })  } KB`,
       journalMode: this.db.pragma('journal_mode', { simple: true }),
-      memoryMapSize: (this.db.pragma('mmap_size', { simple: true }) / 1024 / 1024) + ' MB',
+      memoryMapSize: `${this.db.pragma('mmap_size', { simple: true }) / 1024 / 1024  } MB`,
       tempStore: this.db.pragma('temp_store', { simple: true }),
       totalQueries: 0 // TODO: implement query counter
     };

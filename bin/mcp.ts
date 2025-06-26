@@ -306,7 +306,7 @@ class MCPCLI {
     console.log('4. Update documentation as needed');
   }
 
-  async hybridSearch(query: string, limit: number = 5): Promise<void> {
+  async hybridSearch(query: string, limit = 5): Promise<void> {
     const response = await this.commandHandler.handleCommand({
       command: 'hybridSearch',
       query,

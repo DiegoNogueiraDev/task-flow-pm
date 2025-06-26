@@ -1,0 +1,230 @@
+version: '3.8'
+
+services:
+  # 🔍 Elasticsearch - Motor de busca e analytics
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: taskflow-elasticsearch
+    environment:
+      - node.name=elasticsearch
+      - cluster.name=taskflow-cluster
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms2g -Xmx2g"
+      - xpack.security.enabled=false
+      - xpack.security.enrollment.enabled=false
+      - xpack.security.http.ssl.enabled=false
+      - xpack.security.transport.ssl.enabled=false
+      - action.auto_create_index=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+      - ./config/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    networks:
+      - taskflow-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # 📊 Kibana - Interface de visualização
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.0
+    container_name: taskflow-kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - SERVER_NAME=taskflow-kibana
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=5601
+      - ELASTICSEARCH_USERNAME=kibana_system
+      - ELASTICSEARCH_PASSWORD=kibana_password
+      - xpack.security.enabled=false
+      - xpack.encryptedSavedObjects.encryptionKey=a7a6311933d3503b89bc2dbc36572c7a
+    volumes:
+      - kibana_data:/usr/share/kibana/data
+      - ./config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
+      - ./dashboards:/usr/share/kibana/dashboards:ro
+    ports:
+      - "5601:5601"
+    networks:
+      - taskflow-network
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:5601/api/status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # 🗄️ PostgreSQL - Banco de dados relacional
+  postgres:
+    image: postgres:15-alpine
+    container_name: taskflow-postgres
+    environment:
+      - POSTGRES_DB=taskflow
+      - POSTGRES_USER=taskflow
+      - POSTGRES_PASSWORD=taskflow_password
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./sql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - taskflow-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U taskflow -d taskflow"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # 🔴 Redis - Cache e sessões
+  redis:
+    image: redis:7-alpine
+    container_name: taskflow-redis
+    command: redis-server --appendonly yes --requirepass redis_password
+    volumes:
+      - redis_data:/data
+      - ./config/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    ports:
+      - "6379:6379"
+    networks:
+      - taskflow-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # 🚀 Task Flow PM Application
+  taskflow-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: taskflow-app
+    environment:
+      - NODE_ENV=production
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - POSTGRES_URL=postgresql://taskflow:taskflow_password@postgres:5432/taskflow
+      - REDIS_URL=redis://:redis_password@redis:6379
+      - LOG_LEVEL=info
+      - METRICS_ENABLED=true
+      - DASHBOARD_ENABLED=true
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    ports:
+      - "3000:3000"
+      - "8080:8080"  # Metrics endpoint
+    networks:
+      - taskflow-network
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # 📈 Grafana - Dashboards avançados (opcional)
+  grafana:
+    image: grafana/grafana:10.2.0
+    container_name: taskflow-grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_DOMAIN=localhost
+      - GF_SERVER_HTTP_PORT=3001
+      - GF_DATABASE_TYPE=postgres
+      - GF_DATABASE_HOST=postgres:5432
+      - GF_DATABASE_NAME=taskflow
+      - GF_DATABASE_USER=taskflow
+      - GF_DATABASE_PASSWORD=taskflow_password
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    ports:
+      - "3001:3001"
+    networks:
+      - taskflow-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # 🔄 Logstash - Pipeline de dados (opcional)
+  logstash:
+    image: docker.elastic.co/logstash/logstash:8.11.0
+    container_name: taskflow-logstash
+    volumes:
+      - ./config/logstash.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+      - ./logs:/usr/share/logstash/logs:ro
+    ports:
+      - "5044:5044"
+      - "9600:9600"
+    networks:
+      - taskflow-network
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # 🌐 Nginx - Proxy reverso e load balancer
+  nginx:
+    image: nginx:alpine
+    container_name: taskflow-nginx
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./config/ssl:/etc/nginx/ssl:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - taskflow-network
+    depends_on:
+      - taskflow-app
+      - kibana
+      - grafana
+    restart: unless-stopped
+
+# 📁 Volumes persistentes
+volumes:
+  elasticsearch_data:
+    driver: local
+  kibana_data:
+    driver: local
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+# 🌐 Rede interna
+networks:
+  taskflow-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16 

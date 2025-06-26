@@ -102,7 +102,7 @@ class UnifiedMCPCLI {
     console.log(this.i18n.t('cli.init.success'));
     console.log(`📁 Config created at: ${configPath}`);
     console.log(`📊 Database will be stored at: ${defaultConfig.dbPath}`);
-    console.log('\n' + this.i18n.getArray('cli.init.nextSteps').join('\n'));
+    console.log(`\n${  this.i18n.getArray('cli.init.nextSteps').join('\n')}`);
   }
 
   async plan(specFile: string): Promise<void> {
@@ -120,13 +120,13 @@ class UnifiedMCPCLI {
     });
 
     if (!response.success) {
-      console.error(this.i18n.t('cli.planning.failed') + ':', response.error);
+      console.error(`${this.i18n.t('cli.planning.failed')  }:`, response.error);
       process.exit(1);
     }
 
     const { tasksCreated, dependenciesCreated } = response.data;
     console.log(this.i18n.t('cli.planning.success', tasksCreated, dependenciesCreated));
-    console.log('\n' + this.i18n.getArray('cli.workflow.nextSteps').join('\n'));
+    console.log(`\n${  this.i18n.getArray('cli.workflow.nextSteps').join('\n')}`);
   }
 
   async listTasks(status?: string): Promise<void> {

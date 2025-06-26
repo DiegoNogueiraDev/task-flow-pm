@@ -15,7 +15,7 @@ export interface ScaffoldResult {
 export class ScaffoldGenerator {
   private baseScaffoldDir: string;
 
-  constructor(baseDir: string = 'scaffold') {
+  constructor(baseDir = 'scaffold') {
     this.baseScaffoldDir = baseDir;
   }
 

@@ -381,7 +381,7 @@ export class GraphDB {
     return fullEmbedding;
   }
 
-  searchEmbeddings(queryVector: number[], limit: number = 10): Array<EmbeddingRecord & { similarity: number }> {
+  searchEmbeddings(queryVector: number[], limit = 10): Array<EmbeddingRecord & { similarity: number }> {
     // Simple vector similarity search (cosine similarity)
     const stmt = this.db.prepare('SELECT * FROM embeddings');
     const rows = stmt.all() as any[];
@@ -426,7 +426,7 @@ export class GraphDB {
   }
 
   // 🔍 Hybrid Search Implementation
-  hybridSearch(query: string, k: number = 5): HybridSearchResult[] {
+  hybridSearch(query: string, k = 5): HybridSearchResult[] {
     // Get embeddings similarity scores
     const queryEmbedding = this.generateFallbackEmbedding(); // Fallback for now
     const embeddingResults = this.searchEmbeddings(queryEmbedding, k * 2);
@@ -524,7 +524,7 @@ export class GraphDB {
     }));
   }
 
-  getAllReflections(limit: number = 100): TaskReflection[] {
+  getAllReflections(limit = 100): TaskReflection[] {
     const stmt = this.db.prepare('SELECT * FROM reflections ORDER BY timestamp DESC LIMIT ?');
     const rows = stmt.all(limit) as any[];
     
@@ -565,7 +565,7 @@ export class GraphDB {
   }
 
   // 📊 Analytics for Effort Estimation
-  getEstimationVariances(limit: number = 20): Array<{
+  getEstimationVariances(limit = 20): Array<{
     taskId: string;
     estimate: number;
     actual: number;
