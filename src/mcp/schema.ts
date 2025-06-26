@@ -12,12 +12,15 @@ export interface MCPConfig {
       machine: string;
       startTime: string;
       ip: string;
+      timezone: string;
     };
     monitoring?: {
       enabled: boolean;
       level: 'basic' | 'detailed' | 'debug';
       includeGeoLocation: boolean;
       includeSystemMetrics: boolean;
+      trackIdleTime: boolean;
+      trackWorkPatterns: boolean;
       flushInterval: number;
       batchSize: number;
       retryAttempts: number;
@@ -133,7 +136,7 @@ export interface MCPConfig {
   }
   
   export interface MetricEvent {
-    type: 'task_created' | 'task_started' | 'task_completed' | 'task_status_change' | 'reflection_added' | 'time_tracking';
+    type: 'task_created' | 'task_started' | 'task_completed' | 'task_status_change' | 'reflection_added' | 'time_tracking' | 'user_activity' | 'enhanced_user_metrics';
     taskId: string;
     oldStatus?: string;
     newStatus?: string;
