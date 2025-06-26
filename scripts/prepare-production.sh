@@ -20,15 +20,18 @@ error() { echo -e "${RED}[ERROR]${NC} $1"; }
 check_dependencies() {
     log "Verificando dependências..."
     
-    if ! command -v node &> /dev/null; then
-        error "Node.js não encontrado. Instale Node.js 18+"
-        exit 1
-    fi
-    
-    if ! command -v npm &> /dev/null; then
-        error "NPM não encontrado"
-        exit 1
-    fi
+      if ! command -v node &> /dev/null; then
+      error "Node.js não encontrado. Instale Node.js 18+"
+      exit 1
+  fi
+  
+  if ! command -v npm &> /dev/null; then
+      error "NPM não encontrado"
+      exit 1
+  fi
+  
+  log "✅ Node.js $(node --version) encontrado"
+  log "✅ NPM $(npm --version) encontrado"
     
     log "✅ Dependências verificadas"
 }
@@ -95,11 +98,13 @@ esac
 
 echo "🚀 Instalando Task Flow PM Enterprise..."
 
-if ! command -v node &> /dev/null; then
-    echo "❌ Node.js não encontrado. Instale Node.js 18+:"
-    echo "   https://nodejs.org/"
-    exit 1
-fi
+  if ! command -v node &> /dev/null; then
+      echo "❌ Node.js não encontrado. Instale Node.js 18+:"
+      echo "   https://nodejs.org/"
+      exit 1
+  fi
+  
+  echo "✅ Node.js $(node --version) detectado"
 
 mkdir -p "$INSTALL_DIR"
 
@@ -264,13 +269,21 @@ npm install -g @empresa/task-flow-pm
 taskflow setup --enterprise
 ```
 
-## Verificação
+  ## Verificação
 
-```bash
-taskflow health      # Health check
-taskflow diagnose    # Diagnóstico completo
-taskflow status      # Status atual
-```
+  ```bash
+  taskflow health      # Health check
+  taskflow diagnose    # Diagnóstico completo
+  taskflow status      # Status atual
+  ```
+
+  ## Recursos 100% Node.js
+
+  ✅ **SEM PYTHON** - Totalmente baseado em Node.js/TypeScript
+  ✅ **Processamento DOCX** - Via mammoth library
+  ✅ **Processamento PDF** - Via pdf-parse library  
+  ✅ **Análise HTML** - Via cheerio library
+  ✅ **Markdown nativo** - Processamento direto
 
 ## Uso no Cursor
 

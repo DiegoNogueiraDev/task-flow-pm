@@ -1,7 +1,11 @@
 # 🎯 Task Flow PM - Gerenciamento Inteligente de Tarefas com IA
 
-> **Sistema local-first de gerenciamento de projetos com IA embarcada, integração nativa com Cursor/VS Code e knowledge graph para contexto inteligente.**
+> **Sistema 100% Node.js de gerenciamento de projetos com IA embarcada, processamento de documentos nativo e integração MCP para Cursor/VS Code.**
 
+[![Node.js Only](https://img.shields.io/badge/Runtime-Node.js%20Only-brightgreen)](https://nodejs.org/)
+[![No Python](https://img.shields.io/badge/Python-Zero%20Dependencies-red)](docs/nodejs-only-solution.md)
+[![MCP Tools](https://img.shields.io/badge/MCP%20Tools-15%20Active-blue)](bin/server.ts)
+[![Enterprise Ready](https://img.shields.io/badge/Enterprise-Ready-gold)](docs/nodejs-only-solution.md)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)]()
 [![License](https://img.shields.io/badge/license-MIT-blue)]()
 [![Node Version](https://img.shields.io/badge/node-%3E%3D18.0.0-green)]()
