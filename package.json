@@ -4,18 +4,27 @@
   "description": "Local-first Model Context Protocol server with embedded knowledge graph",
   "main": "dist/bin/server.js",
   "bin": {
-    "mcp": "./dist/bin/mcp.js"
+    "mcp": "./dist/bin/mcp-unified.js",
+    "mcp-pt": "./dist/bin/mcp-unified.js",
+    "mcp-en": "./dist/bin/mcp-unified.js"
   },
   "scripts": {
-    "build": "esbuild bin/server.ts bin/mcp.ts --bundle --platform=node --outdir=dist --format=cjs --target=node18 --external:better-sqlite3 --external:sqlite3",
+    "build": "npm run build:server && npm run build:cli && npm run build:i18n",
+    "build:server": "esbuild bin/server.ts --bundle --platform=node --outdir=dist/bin --format=cjs --target=node18 --external:better-sqlite3 --external:sqlite3",
+    "build:cli": "esbuild bin/mcp-unified.ts --bundle --platform=node --outdir=dist/bin --format=cjs --target=node18 --external:better-sqlite3 --external:sqlite3",
+    "build:i18n": "tsc src/i18n/index.ts --outDir dist/src/i18n --target es2020 --module commonjs",
     "dev": "ts-node bin/server.ts",
-    "cli": "ts-node bin/mcp.ts",
+    "cli": "ts-node bin/mcp-unified.ts",
+    "cli-pt": "LANG=pt_BR.UTF-8 ts-node bin/mcp-unified.ts",
+    "cli-en": "LANG=en_US.UTF-8 ts-node bin/mcp-unified.ts",
     "test": "vitest",
     "test:complete": "bash scripts/test-complete.sh",
     "test:complete:windows": "powershell -ExecutionPolicy Bypass -File scripts/test-complete.ps1",
     "test:js-embeddings": "node scripts/test-js-embeddings.js",
     "test:coverage": "vitest --coverage",
     "test:watch": "vitest --watch",
+    "test:i18n": "node scripts/test-i18n.js",
+    "setup:cursor": "bash scripts/setup-cursor-smart.sh",
     "lint": "eslint src/**/*.ts bin/*.ts --fix",
     "format": "prettier --write src/**/*.ts bin/*.ts",
     "prepare": "npm run build"
@@ -30,23 +39,23 @@
   "author": "DevArchitect AI",
   "license": "MIT",
   "dependencies": {
-    "@types/better-sqlite3": "^7.6.8",
     "better-sqlite3": "^9.2.2",
+    "yargs": "^17.7.2",
     "node-fetch": "^3.3.2",
-    "yargs": "^17.7.2"
+    "@types/better-sqlite3": "^7.6.8"
   },
   "devDependencies": {
-    "@types/node": "^20.19.1",
+    "typescript": "^5.3.3",
+    "ts-node": "^10.9.2",
+    "@types/node": "^20.10.6",
     "@types/yargs": "^17.0.32",
+    "esbuild": "^0.19.11",
+    "vitest": "^1.1.3",
+    "eslint": "^8.56.0",
     "@typescript-eslint/eslint-plugin": "^6.18.1",
     "@typescript-eslint/parser": "^6.18.1",
-    "esbuild": "^0.19.11",
-    "eslint": "^8.56.0",
     "eslint-config-airbnb-typescript": "^17.1.0",
-    "prettier": "^3.1.1",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.3.3",
-    "vitest": "^1.1.3"
+    "prettier": "^3.1.1"
   },
   "engines": {
     "node": ">=18.0.0"

@@ -258,4 +258,34 @@ echo "🔧 Integration:"
 echo "  npm run dev              # Start MCP server for Cursor"
 echo "  Copy cursor.local-mcp.json to your project"
 echo
-echo "📊 Current
+echo "📊 Current Status:"
+if [ -f ".mcp/graph.db" ]; then
+    TASK_COUNT=$(node -e "
+    const Database = require('better-sqlite3');
+    const db = new Database('.mcp/graph.db');
+    try {
+      const stats = db.prepare('SELECT 
+        COUNT(*) as total,
+        SUM(CASE WHEN status = \"pending\" THEN 1 ELSE 0 END) as pending,
+        SUM(CASE WHEN status = \"in-progress\" THEN 1 ELSE 0 END) as in_progress,
+        SUM(CASE WHEN status = \"completed\" THEN 1 ELSE 0 END) as completed
+      FROM nodes').get();
+      console.log(\`  📋 Total tasks: \${stats.total}\`);
+      console.log(\`  ⏳ Pending: \${stats.pending}\`);
+      console.log(\`  🚧 In Progress: \${stats.in_progress}\`);
+      console.log(\`  ✅ Completed: \${stats.completed}\`);
+    } catch(e) {
+      console.log('  📊 Database stats unavailable');
+    }
+    db.close();
+    ")
+    echo "$TASK_COUNT"
+fi
+
+echo
+echo "🔗 Useful Links:"
+echo "  📖 README.md - Complete documentation"
+echo "  🧪 npm test - Run test suite"
+echo "  🔍 npm run cli search <query> - Search tasks"
+echo
+print_success "Setup complete! MCP Local is fully functional."

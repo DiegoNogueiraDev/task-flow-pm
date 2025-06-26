@@ -1,0 +1,19 @@
+{
+    "cursor.mcp.enabled": true,
+    "cursor.mcp.autoStart": true,
+    "cursor.mcp.servers": ["local-task-mcp"],
+    "cursor.chat.contextAwareness": "enhanced",
+    "cursor.chat.includeWorkspaceContext": true,
+    "cursor.autocomplete.enabled": true,
+    "cursor.autocomplete.includeRecentEdits": true,
+    "cursor.autocomplete.contextLength": 8000,
+    "cursor.composer.enabled": true,
+    "cursor.composer.autoApplyDiffs": false,
+    "cursor.chat.model": "gpt-4",
+    "cursor.chat.maxTokens": 4000,
+    "editor.inlineSuggest.enabled": true,
+    "editor.suggest.snippetsPreventQuickSuggestions": false,
+    "files.associations": {
+      "*.mcp": "json"
+    }
+  }

@@ -1,0 +1,45 @@
+{
+    "name": "MCP Local Development",
+    "description": "AI-powered task management with knowledge graph",
+    "version": "1.0.0",
+    "cursor": {
+      "aiRules": [
+        "Always query MCP Local for task context before suggesting code changes",
+        "Use @next-task prompt to get current work priorities",
+        "Search existing tasks with @search-tasks before creating new implementations",
+        "When completing tasks, suggest using @reflect-task to capture learnings",
+        "Include MCP context in code explanations and suggestions"
+      ],
+      "customInstructions": "This project uses MCP Local for intelligent task management. Always leverage the MCP server to provide context-aware suggestions. When asked about tasks, priorities, or project status, query the MCP system first.",
+      "shortcuts": {
+        "next": "Query MCP for next recommended task",
+        "search": "Search tasks using MCP hybrid search",
+        "context": "Get full context for current task",
+        "reflect": "Add reflection notes to completed task",
+        "status": "Get project status from MCP data"
+      }
+    },
+    "mcp": {
+      "contextPrompts": {
+        "task": "Use getTaskDetails to provide comprehensive task context including dependencies, subtasks, and related work",
+        "planning": "Use generateTasksFromSpec for project planning and task decomposition",
+        "search": "Use hybridSearch to find relevant existing work and avoid duplication",
+        "learning": "Use reflectTask to capture and apply learnings from completed work"
+      },
+      "autoQueries": [
+        "When user asks about 'next task' or 'what should I work on', automatically use getNextTask",
+        "When user mentions specific task IDs, automatically use getTaskDetails",
+        "When user asks about similar or related work, automatically use hybridSearch",
+        "When user mentions completing work, suggest using reflectTask"
+      ]
+    },
+    "files.associations": {
+      "*.mcp": "json",
+      "mcp.json": "json",
+      "spec.md": "markdown"
+    },
+    "editor.rulers": [80, 100],
+    "editor.wordWrap": "bounded",
+    "editor.wordWrapColumn": 100,
+    "typescript.preferences.includePackageJsonAutoImports": "on"
+  }
