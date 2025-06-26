@@ -3,6 +3,25 @@ export interface MCPConfig {
     embeddingsModel: string;
     esEndpoint: string;
     contextTokens: number;
+    user?: {
+      id: string;
+      name: string;
+      team: string;
+      role: string;
+      location: string;
+      machine: string;
+      startTime: string;
+      ip: string;
+    };
+    monitoring?: {
+      enabled: boolean;
+      level: 'basic' | 'detailed' | 'debug';
+      includeGeoLocation: boolean;
+      includeSystemMetrics: boolean;
+      flushInterval: number;
+      batchSize: number;
+      retryAttempts: number;
+    };
   }
   
   export interface TaskNode {
