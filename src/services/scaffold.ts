@@ -282,7 +282,7 @@ export const ${className}: React.FC<${className}Props> = (props) => {
    */
 
   return (
-    <div className="${fileName}">
+    <div className="${className}">
       {/* TODO: Implement component UI */}
       <h1>TODO: ${task.title}</h1>
       <p>Implement component functionality here</p>

@@ -30,27 +30,6 @@ export class EffortEstimator {
     }
 
     return estimate;
-  }ortEstimator {
-  private static readonly COMPLEXITY_MULTIPLIERS = {
-    epic: 8.0,
-    story: 4.0,
-    task: 2.0,
-    subtask: 1.0,
-  };
-
-  private static readonly PRIORITY_MULTIPLIERS = {
-    critical: 1.5,
-    high: 1.2,
-    medium: 1.0,
-    low: 0.8,
-  };
-
-  static estimateEffort(task: Partial<TaskNode>): number {
-    const baseEstimate = this.getBaseEstimate(task.description || '', task.type || 'task');
-    const complexityMultiplier = this.COMPLEXITY_MULTIPLIERS[task.type || 'task'];
-    const priorityMultiplier = this.PRIORITY_MULTIPLIERS[task.priority || 'medium'];
-    
-    return Math.round(baseEstimate * complexityMultiplier * priorityMultiplier);
   }
 
   private static getBaseEstimate(description: string, type: string): number {
@@ -171,3 +150,4 @@ export class EffortEstimator {
       totalCompletedTasks: variances.length,
     };
   }
+}

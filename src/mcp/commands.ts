@@ -1,24 +1,4 @@
-for (const task of planResult.tasks) {
-    const storedTask = this.db.addNode(task);
-    storedTasks.push(storedTask);
-    
-    // Log task creation
-    this.logger.logTaskCreated(storedTask.id, storedTask.estimateMinutes);
-    
-    // Generate and store embeddings
-    const embeddingText = `${task.title} ${task.description}`;
-    try {
-      const vector = await this.embeddings.generateEmbedding(embeddingText);
-      this.db.addEmbedding({
-        id: randomUUID(),
-        nodeId: task.id,
-        text: embeddingText,
-        vector,
-      });
-    } catch (error) {
-      console.warn(`Failed to generate embedding for task ${task.id}:`, error);
-    }
-  }import { GraphDB } from '../db/graph';
+import { GraphDB } from '../db/graph';
 import { EmbeddingsService } from '../db/embeddings';
 import { TaskPlanner } from '../services/planner';
 import { Logger } from '../services/logger';
@@ -83,7 +63,7 @@ async handleCommand(request: MCPRequestTypes): Promise<MCPResponse> {
       default:
         return {
           success: false,
-          error: `Unknown command: ${request.command}`,
+          error: `Unknown command: ${(request as any).command}`,
         };
     }
   } catch (error) {
@@ -235,18 +215,18 @@ private async markTaskComplete(request: MarkTaskCompleteRequest): Promise<MCPRes
 
   // Update task status and calculate actual minutes
   const oldStatus = task.status;
-  let actualMinutes = actualMinutes || task.actualMinutes;
+  let calculatedActualMinutes = actualMinutes || task.actualMinutes;
   
   // Calculate actual minutes if task was started
   if (task.startedAt && !actualMinutes) {
     const startTime = new Date(task.startedAt).getTime();
     const endTime = new Date().getTime();
-    actualMinutes = Math.round((endTime - startTime) / (1000 * 60));
+    calculatedActualMinutes = Math.round((endTime - startTime) / (1000 * 60));
   }
 
   const updatedTask = this.db.updateNode(taskId, {
     status: 'completed',
-    actualMinutes,
+    actualMinutes: calculatedActualMinutes,
     endedAt: new Date().toISOString(),
   });
 
@@ -261,7 +241,7 @@ private async markTaskComplete(request: MarkTaskCompleteRequest): Promise<MCPRes
   EffortEstimator.updateLearningFromCompletion(
     taskId,
     task.estimateMinutes,
-    actualMinutes,
+    calculatedActualMinutes,
     this.db
   );
 
@@ -271,21 +251,21 @@ private async markTaskComplete(request: MarkTaskCompleteRequest): Promise<MCPRes
     oldStatus,
     'completed',
     task.estimateMinutes,
-    actualMinutes
+    calculatedActualMinutes
   );
 
   this.logger.logTaskCompleted(
     taskId,
     task.estimateMinutes,
-    actualMinutes
+    calculatedActualMinutes
   );
 
   return {
     success: true,
     data: {
       task: updatedTask,
-      variance: actualMinutes ? 
-        ((actualMinutes - task.estimateMinutes) / task.estimateMinutes) * 100 : 0,
+      variance: calculatedActualMinutes ? 
+        ((calculatedActualMinutes - task.estimateMinutes) / task.estimateMinutes) * 100 : 0,
       learningStats: EffortEstimator.getLearningStats(this.db),
     },
   };

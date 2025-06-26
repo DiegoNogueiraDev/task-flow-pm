@@ -46,6 +46,9 @@ export class Logger {
 
     for (let attempt = 0; attempt < this.retryDelays.length; attempt++) {
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        
         const response = await fetch(this.esEndpoint, {
           method: 'POST',
           headers: {
@@ -53,8 +56,10 @@ export class Logger {
             'Accept': 'application/json',
           },
           body: JSON.stringify(event),
-          timeout: 10000, // 10 second timeout
+          signal: controller.signal,
         });
+        
+        clearTimeout(timeoutId);
 
         if (response.ok) {
           console.log(`✅ Event sent to Elasticsearch: ${event.type} (attempt ${attempt + 1})`);
@@ -179,10 +184,15 @@ export class Logger {
 
     const startTime = Date.now();
     try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
       const response = await fetch(this.esEndpoint.replace('/mcp-events', '/_cluster/health'), {
         method: 'GET',
-        timeout: 5000,
+        signal: controller.signal,
       });
+      
+      clearTimeout(timeoutId);
       
       const responseTime = Date.now() - startTime;
       

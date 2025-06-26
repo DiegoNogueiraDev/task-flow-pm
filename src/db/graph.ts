@@ -7,14 +7,18 @@ export class GraphDB {
   private db: Database.Database;
 
   constructor(dbPath: string) {
-    // Ensure directory exists
-    const dir = dirname(dbPath);
-    if (!existsSync(dir)) {
-      mkdirSync(dir, { recursive: true });
-    }
+    try {
+      // Ensure directory exists
+      const dir = dirname(dbPath);
+      if (!existsSync(dir)) {
+        mkdirSync(dir, { recursive: true });
+      }
 
-    this.db = new Database(dbPath);
-    this.migrate();
+      this.db = new Database(dbPath);
+      this.migrate();
+    } catch (error) {
+      throw new Error(`Failed to initialize database at ${dbPath}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   private migrate(): void {
@@ -104,38 +108,42 @@ export class GraphDB {
   }
 
   addNode(node: Omit<TaskNode, 'createdAt' | 'updatedAt'>): TaskNode {
-    const now = new Date().toISOString();
-    const fullNode: TaskNode = {
-      ...node,
-      createdAt: now,
-      updatedAt: now,
-    };
+    try {
+      const now = new Date().toISOString();
+      const fullNode: TaskNode = {
+        ...node,
+        createdAt: now,
+        updatedAt: now,
+      };
 
-    const stmt = this.db.prepare(`
-      INSERT INTO nodes (
-        id, title, description, type, status, estimate_minutes, actual_minutes,
-        priority, tags, created_at, updated_at, started_at, ended_at, parent_id
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
+      const stmt = this.db.prepare(`
+        INSERT INTO nodes (
+          id, title, description, type, status, estimate_minutes, actual_minutes,
+          priority, tags, created_at, updated_at, started_at, ended_at, parent_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `);
 
-    stmt.run(
-      fullNode.id,
-      fullNode.title,
-      fullNode.description,
-      fullNode.type,
-      fullNode.status,
-      fullNode.estimateMinutes,
-      fullNode.actualMinutes,
-      fullNode.priority,
-      JSON.stringify(fullNode.tags),
-      fullNode.createdAt,
-      fullNode.updatedAt,
-      fullNode.startedAt || null,
-      fullNode.endedAt || null,
-      fullNode.parentId || null
-    );
+      stmt.run(
+        fullNode.id,
+        fullNode.title,
+        fullNode.description,
+        fullNode.type,
+        fullNode.status,
+        fullNode.estimateMinutes,
+        fullNode.actualMinutes,
+        fullNode.priority,
+        JSON.stringify(fullNode.tags),
+        fullNode.createdAt,
+        fullNode.updatedAt,
+        fullNode.startedAt || null,
+        fullNode.endedAt || null,
+        fullNode.parentId || null
+      );
 
-    return fullNode;
+      return fullNode;
+    } catch (error) {
+      throw new Error(`Failed to add node ${node.id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 
   updateNode(id: string, updates: Partial<TaskNode>): TaskNode | null {
@@ -373,7 +381,7 @@ export class GraphDB {
     return fullEmbedding;
   }
 
-  searchEmbeddings(queryVector: number[], limit: number = 10): EmbeddingRecord[] {
+  searchEmbeddings(queryVector: number[], limit: number = 10): Array<EmbeddingRecord & { similarity: number }> {
     // Simple vector similarity search (cosine similarity)
     const stmt = this.db.prepare('SELECT * FROM embeddings');
     const rows = stmt.all() as any[];
